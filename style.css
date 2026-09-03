@@ -136,6 +136,22 @@ body {
 }
 .hud-unit { font-size: .6em; margin-left: .12em; color: var(--sun); }
 
+.hud-item[hidden] { display: none; }
+
+/* コンボ表示：倍率が上がっている間だけ光らせる */
+.hud-combo.boosted .hud-value {
+  color: #ffd98a;
+  text-shadow: 0 0 12px rgba(255, 217, 138, .55);
+  animation: combo-pulse 1s ease-in-out infinite;
+}
+@keyframes combo-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-combo.boosted .hud-value { animation: none; }
+}
+
 .hud-pips { display: flex; gap: 7px; padding-top: 9px; }
 .pip {
   width: 14px;

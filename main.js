@@ -52,6 +52,9 @@ const hudScore = $("hud-score");
 const hudTime = $("hud-time");
 const hudDodged = $("hud-dodged");
 const hudLives = $("hud-lives");
+const hudComboItem = $("hud-combo-item");
+const hudCombo = $("hud-combo");
+const hudMult = $("hud-mult");
 
 const screens = {
   title: $("overlay-title"),
@@ -328,6 +331,11 @@ function updateHud() {
   hudScore.textContent = st.score;
   hudTime.textContent = st.remain;
   hudDodged.textContent = st.dodged;
+  // コンボは1以上のときだけ見せる（画面を余計に埋めない）
+  hudComboItem.hidden = st.combo < 2;
+  hudCombo.textContent = st.combo;
+  hudMult.textContent = st.multiplier.toFixed(1);
+  hudComboItem.classList.toggle("boosted", st.multiplier > 1);
   const pips = hudLives.children;
   for (let i = 0; i < pips.length; i++) {
     pips[i].classList.toggle("lost", i >= st.lives);
@@ -359,6 +367,7 @@ function showResult(reason) {
   $("result-title").textContent = titles[reason] || "サバイバル終了！";
   $("result-score").textContent = st.score;
   $("result-dodged").textContent = st.dodged;
+  $("result-combo").textContent = st.bestCombo;
   $("result-time").textContent = Math.floor(st.elapsed);
   $("result-difficulty").textContent = difficultyLabel(settings.difficulty);
   $("result-best").textContent = top.length ? top[0] : st.score;
@@ -687,6 +696,7 @@ async function main() {
   Game.setDifficulty(settings.difficulty);
   Game.on("hit", () => Sound.hit());
   Game.on("dodge", () => Sound.dodge());
+  Game.on("item", (e) => (e.kind === "heart" ? Sound.heal() : Sound.pickup()));
   Game.on("gameover", (e) => showResult(e.reason));
 
   refreshTitleBest();

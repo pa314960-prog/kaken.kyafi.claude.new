@@ -194,6 +194,19 @@ window.Sound = (function () {
       setAmbient(0.16, 1.2);
     },
 
+    /* アイテム（シジミ）を取った */
+    pickup: function () {
+      tone({ type: 'triangle', freq: 880, dur: 0.08, gain: 0.13 });
+      tone({ type: 'triangle', freq: 1320, dur: 0.10, gain: 0.12, delay: 0.07 });
+      tone({ type: 'triangle', freq: 1760, dur: 0.16, gain: 0.10, delay: 0.14 });
+    },
+
+    /* ライフが回復した */
+    heal: function () {
+      tone({ type: 'sine', freq: 520, toFreq: 780, dur: 0.20, gain: 0.16 });
+      tone({ type: 'sine', freq: 1040, dur: 0.30, gain: 0.12, delay: 0.10 });
+    },
+
     /* 障害物をよけた */
     dodge: function () {
       tone({ type: 'sine', freq: 1250, toFreq: 1750, dur: 0.10, gain: 0.075 });

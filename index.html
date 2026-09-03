@@ -39,6 +39,10 @@
     <span class="hud-label">よけた数</span>
     <span class="hud-value"><span id="hud-dodged">0</span></span>
   </div>
+  <div class="hud-item hud-combo" id="hud-combo-item" hidden>
+    <span class="hud-label">COMBO</span>
+    <span class="hud-value"><span id="hud-combo">0</span><span class="hud-unit">×<span id="hud-mult">1.0</span></span></span>
+  </div>
   <div class="hud-item">
     <span class="hud-label">ライフ</span>
     <!-- 印の数は難易度によって変わるので main.js が作ります -->
@@ -177,6 +181,10 @@
       <div>
         <span class="result-label">よけた数</span>
         <span class="result-value" id="result-dodged">0</span>
+      </div>
+      <div>
+        <span class="result-label">最大コンボ</span>
+        <span class="result-value" id="result-combo">0</span>
       </div>
       <div>
         <span class="result-label">生存時間</span>
