@@ -50,9 +50,22 @@ window.Game = (function () {
     buoySpacing: 15,
     buoyCount: 11,
 
+    /* --- アイテム --- */
+    itemFirstDelay: 4.0,      // 最初のアイテムが出るまでの秒数
+    itemInterval: 6.0,        // アイテムの出現間隔（秒）
+    itemJitter: 2.0,          // 出現間隔のばらつき（秒）
+    itemHalfWidth: 1.10,      // 取得判定の半幅（ワールド単位）
+    heartChance: 0.28,        // ライフ回復アイテムが出る割合
+
     /* --- スコア --- */
     scorePerSecond: 10,
     scorePerDodge: 25,
+    scorePerShell: 120,
+
+    /* --- コンボ --- */
+    comboPerStep: 5,          // これだけ続けてよけるごとに倍率が上がる
+    comboStepBonus: 0.5,      // 1段階あたりの倍率の増分
+    comboMaxMultiplier: 3.0,  // 倍率の上限
 
     invincibleSeconds: 1.2,
   };
@@ -82,6 +95,9 @@ window.Game = (function () {
   var camX = 0;         // カメラのX
 
   var obstacles = [];
+  var items = [];
+  var particles = [];  // 画面座標で動く小さな粒（演出のみ）
+  var floaters = [];   // 「+50」のように浮き上がる文字（演出のみ）
   var buoys = [];
   var waveScroll = 0;
   var clock = 0;        // 演出用の累積時間
@@ -91,9 +107,13 @@ window.Game = (function () {
   var lives = 3;
   var dodged = 0;
   var score = 0;
+  var scoreAcc = 0;    // 小数を保ったスコア（表示は切り捨て）
+  var combo = 0;
+  var bestCombo = 0;
   var invincible = 0;
   var hitFlash = 0;
   var spawnTimer = 0;
+  var itemTimer = 0;
 
   var listeners = {};
 
@@ -181,13 +201,20 @@ window.Game = (function () {
     charVelX = 0;
     camX = 0;
     obstacles = [];
+    items = [];
+    particles = [];
+    floaters = [];
     elapsed = 0;
     lives = D.lives;
     dodged = 0;
     score = 0;
+    scoreAcc = 0;
+    combo = 0;
+    bestCombo = 0;
     invincible = 0;
     hitFlash = 0;
     spawnTimer = D.spawnStart;
+    itemTimer = CONFIG.itemFirstDelay;
     playing = false;
   }
 
@@ -236,6 +263,13 @@ window.Game = (function () {
       spawnTimer = currentSpawnInterval();
     }
 
+    // アイテムの出現
+    itemTimer -= dt;
+    if (itemTimer <= 0) {
+      spawnItem();
+      itemTimer = CONFIG.itemInterval + (Math.random() - 0.5) * 2 * CONFIG.itemJitter;
+    }
+
     // 障害物を手前へ動かし、通過した瞬間に判定する
     var hitHalf = CONFIG.hitHalfWidth * D.hitScale;
     for (var i = 0; i < obstacles.length; i++) {
@@ -248,17 +282,52 @@ window.Game = (function () {
             lives -= 1;
             invincible = CONFIG.invincibleSeconds;
             hitFlash = 0.3;
-            emit('hit', { lives: lives });
+            combo = 0;                       // コンボは被弾で途切れる
+            burst(charX, CONFIG.playerZ, 18, '#ff6b6b');
+            emit('hit', { lives: lives, combo: combo });
           }
         } else {
           dodged += 1;
-          emit('dodge', { dodged: dodged });
+          combo += 1;
+          if (combo > bestCombo) bestCombo = combo;
+          var gain = Math.round(CONFIG.scorePerDodge * multiplier());
+          scoreAcc += gain;
+          popText(ob.x, ob.z, '+' + gain, '#eaf6ff');
+          burst(ob.x, ob.z, 7, '#9fe8ff');
+          emit('dodge', { dodged: dodged, combo: combo, multiplier: multiplier() });
         }
       }
     }
     obstacles = obstacles.filter(function (o) { return o.z > CONFIG.despawnZ; });
 
-    score = Math.floor(elapsed) * CONFIG.scorePerSecond + dodged * CONFIG.scorePerDodge;
+    // アイテムを手前へ動かし、通過した瞬間に取得判定する
+    for (var j = 0; j < items.length; j++) {
+      var it = items[j];
+      it.z -= speed * dt;
+      if (!it.resolved && it.z <= CONFIG.playerZ) {
+        it.resolved = true;
+        if (Math.abs(it.x - charX) < CONFIG.itemHalfWidth) {
+          it.taken = true;
+          if (it.kind === 'heart') {
+            if (lives < D.lives) lives += 1;
+            popText(it.x, it.z, 'LIFE+1', '#ffb3c7');
+            burst(it.x, it.z, 16, '#ffb3c7');
+            emit('item', { kind: 'heart', lives: lives });
+          } else {
+            var pts = Math.round(CONFIG.scorePerShell * multiplier());
+            scoreAcc += pts;
+            popText(it.x, it.z, '+' + pts, '#ffd98a');
+            burst(it.x, it.z, 16, '#ffd98a');
+            emit('item', { kind: 'shell', points: pts });
+          }
+        }
+      }
+    }
+    items = items.filter(function (o) { return o.z > CONFIG.despawnZ && !o.taken; });
+
+    scoreAcc += CONFIG.scorePerSecond * dt;
+    score = Math.floor(scoreAcc);
+    updateEffects(dt);
 
     if (lives <= 0) {
       playing = false;
@@ -311,6 +380,71 @@ window.Game = (function () {
         seed: Math.random() * Math.PI * 2,
         resolved: false,
       });
+    }
+  }
+
+  function spawnItem() {
+    var lane = Math.floor(Math.random() * CONFIG.laneCount);
+    var wantHeart = lives < D.lives && Math.random() < CONFIG.heartChance;
+    items.push({
+      x: laneX(lane),
+      z: CONFIG.spawnZ,
+      kind: wantHeart ? 'heart' : 'shell',
+      seed: Math.random() * Math.PI * 2,
+      resolved: false,
+      taken: false,
+    });
+  }
+
+  /* 現在のスコア倍率（コンボが伸びるほど上がる） */
+  function multiplier() {
+    var steps = Math.floor(combo / CONFIG.comboPerStep);
+    return Math.min(CONFIG.comboMaxMultiplier, 1 + steps * CONFIG.comboStepBonus);
+  }
+
+  /* ----------------------------------------------------------
+     演出（粒とポップ文字）
+       どちらもゲーム進行には影響しない。画面座標で動かす。
+     ---------------------------------------------------------- */
+  function burst(x, z, count, color) {
+    var p = project(x, z - 0.5);
+    for (var i = 0; i < count; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var sp = (40 + Math.random() * 150) * Math.min(2, p.s / 40 + 0.6);
+      particles.push({
+        x: p.x, y: p.y - p.s * 0.9,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 60,
+        life: 0.45 + Math.random() * 0.35,
+        age: 0,
+        r: 1.5 + Math.random() * 2.5,
+        color: color,
+      });
+    }
+    if (particles.length > 240) particles.splice(0, particles.length - 240);
+  }
+
+  function popText(x, z, text, color) {
+    var p = project(x, z - 0.5);
+    floaters.push({ x: p.x, y: p.y - p.s * 1.4, text: text, color: color, life: 0.9, age: 0 });
+    if (floaters.length > 12) floaters.shift();
+  }
+
+  function updateEffects(dt) {
+    var i;
+    for (i = particles.length - 1; i >= 0; i--) {
+      var q = particles[i];
+      q.age += dt;
+      if (q.age >= q.life) { particles.splice(i, 1); continue; }
+      q.vy += 420 * dt;          // ゆるい重力
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+    }
+    for (i = floaters.length - 1; i >= 0; i--) {
+      var f = floaters[i];
+      f.age += dt;
+      if (f.age >= f.life) { floaters.splice(i, 1); continue; }
+      f.y -= 46 * dt;
     }
   }
 
@@ -556,6 +690,105 @@ window.Game = (function () {
     ctx.globalAlpha = 1;
   }
 
+  /* ----------------------------------------------------------
+     アイテム（シジミ＝得点、ハート＝ライフ回復）
+     ---------------------------------------------------------- */
+  function drawItems() {
+    var sorted = items.slice().sort(function (a, b) { return b.z - a.z; });
+    for (var i = 0; i < sorted.length; i++) {
+      var it = sorted[i];
+      var p = project(it.x, it.z);
+      if (p.y < horizonY - 20 || p.y > H + 200) continue;
+
+      var alpha = clamp((CONFIG.spawnZ - it.z) / 30, 0, 1);
+      var bob = Math.sin(clock * 2.4 + it.seed) * 0.12;
+      var glow = 0.55 + 0.45 * Math.sin(clock * 5 + it.seed);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y - (1.0 + bob) * p.s);
+      ctx.scale(p.s, p.s);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // 後光
+      var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 0.85);
+      var tint = it.kind === 'heart' ? '255,140,180' : '255,214,120';
+      g.addColorStop(0, 'rgba(' + tint + ',' + (0.45 * glow).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(' + tint + ',0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, 0.85, 0, Math.PI * 2); ctx.fill();
+
+      if (it.kind === 'heart') drawHeartIcon();
+      else drawShellIcon();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawShellIcon() {
+    ctx.fillStyle = '#ffd98a';
+    ctx.strokeStyle = 'rgba(120,74,20,0.75)';
+    ctx.lineWidth = 0.045;
+    ctx.beginPath();
+    ctx.moveTo(-0.42, 0.10);
+    ctx.quadraticCurveTo(-0.34, -0.44, 0, -0.44);
+    ctx.quadraticCurveTo(0.34, -0.44, 0.42, 0.10);
+    ctx.quadraticCurveTo(0, 0.34, -0.42, 0.10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.lineWidth = 0.028;
+    for (var i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 0.11, -0.36);
+      ctx.lineTo(i * 0.19, 0.16);
+      ctx.stroke();
+    }
+  }
+
+  function drawHeartIcon() {
+    ctx.fillStyle = '#ff7fa6';
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 0.045;
+    ctx.beginPath();
+    ctx.moveTo(0, 0.36);
+    ctx.bezierCurveTo(-0.62, -0.10, -0.34, -0.56, 0, -0.24);
+    ctx.bezierCurveTo(0.34, -0.56, 0.62, -0.10, 0, 0.36);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  /* 粒とポップ文字（画面座標のまま描く） */
+  function drawEffects() {
+    var i;
+    base();
+    for (i = 0; i < particles.length; i++) {
+      var q = particles[i];
+      var t = 1 - q.age / q.life;
+      ctx.globalAlpha = Math.max(0, t);
+      ctx.fillStyle = q.color;
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.r * (0.4 + t * 0.9), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (i = 0; i < floaters.length; i++) {
+      var f = floaters[i];
+      var k = 1 - f.age / f.life;
+      ctx.globalAlpha = Math.max(0, Math.min(1, k * 1.6));
+      ctx.font = '700 ' + Math.round(Math.max(16, H * 0.032)) + 'px system-ui, sans-serif';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(3,20,34,0.7)';
+      ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function drawNet() {
     var s = 0.95; // 半径（ワールド単位）
     ctx.strokeStyle = 'rgba(238,247,252,0.95)';
@@ -717,7 +950,7 @@ window.Game = (function () {
     if (opts.showLanes) drawLaneGuides();
     drawBuoys();
 
-    if (opts.showObstacles !== false) drawObstacles();
+    if (opts.showObstacles !== false) { drawObstacles(); drawItems(); }
 
     // 手前を少し暗くしてキャラクターを引き立てる
     var g = ctx.createLinearGradient(0, H * 0.66, 0, H);
@@ -729,6 +962,7 @@ window.Game = (function () {
     if (opts.showCharacter !== false) drawCharacter();
 
     base();
+    drawEffects();
     drawHitVignette();
   }
 
@@ -741,6 +975,9 @@ window.Game = (function () {
       lives: lives,
       maxLives: D.lives,
       dodged: dodged,
+      combo: combo,
+      bestCombo: bestCombo,
+      multiplier: multiplier(),
       elapsed: elapsed,
       remain: Math.max(0, Math.ceil(D.timeLimit - elapsed)),
       timeLimit: D.timeLimit,
