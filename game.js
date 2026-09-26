@@ -68,9 +68,9 @@ window.Game = (function () {
     itemInterval: 6.0,        // アイテムの出現間隔（秒）
     itemJitter: 2.0,          // 出現間隔のばらつき（秒）
     itemHalfWidth: 1.10,      // 取得判定の半幅（ワールド単位）
-    heartChance: 0.28,
+    heartChance: 0.28,        // ライフ回復アイテムが出る割合
     shrimpImage: 'assets/items/shrimp.webp',
-    shrimpWidth: 2.0,         // エビの表示幅（ワールド単位）        // ライフ回復アイテムが出る割合
+    shrimpWidth: 2.0,         // エビの表示幅（ワールド単位）
 
     /* --- スコア --- */
     scorePerSecond: 10,
