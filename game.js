@@ -68,12 +68,14 @@ window.Game = (function () {
     itemInterval: 6.0,        // アイテムの出現間隔（秒）
     itemJitter: 2.0,          // 出現間隔のばらつき（秒）
     itemHalfWidth: 1.10,      // 取得判定の半幅（ワールド単位）
-    heartChance: 0.28,        // ライフ回復アイテムが出る割合
+    heartChance: 0.28,
+    shrimpImage: 'assets/items/shrimp.webp',
+    shrimpWidth: 2.0,         // エビの表示幅（ワールド単位）        // ライフ回復アイテムが出る割合
 
     /* --- スコア --- */
     scorePerSecond: 10,
     scorePerDodge: 25,
-    scorePerShell: 120,
+    scorePerShrimp: 120,
 
     /* --- コンボ --- */
     comboPerStep: 5,          // これだけ続けてよけるごとに倍率が上がる
@@ -153,6 +155,11 @@ window.Game = (function () {
   charImg.onload = function () { charImgReady = true; };
   charImg.onerror = function () { charImgReady = false; };
   charImg.src = CONFIG.characterImage;
+
+  /* 得点アイテム（エビ）の画像 */
+  var shrimpImg = { img: new Image(), ready: false };
+  shrimpImg.img.onload = function () { shrimpImg.ready = true; };
+  shrimpImg.img.src = CONFIG.shrimpImage;
 
   /* 背景写真（1枚ずつ読み込み、読めたものだけ使う） */
   var bgImages = CONFIG.backgrounds.map(function (b) {
@@ -353,11 +360,11 @@ window.Game = (function () {
             burst(it.x, it.z, 16, '#ffb3c7');
             emit('item', { kind: 'heart', lives: lives });
           } else {
-            var pts = Math.round(CONFIG.scorePerShell * multiplier());
+            var pts = Math.round(CONFIG.scorePerShrimp * multiplier());
             scoreAcc += pts;
             popText(it.x, it.z, '+' + pts, '#ffd98a');
             burst(it.x, it.z, 16, '#ffd98a');
-            emit('item', { kind: 'shell', points: pts });
+            emit('item', { kind: 'shrimp', points: pts });
           }
         }
       }
@@ -434,7 +441,7 @@ window.Game = (function () {
     items.push({
       x: laneX(lane),
       z: CONFIG.spawnZ,
-      kind: wantHeart ? 'heart' : 'shell',
+      kind: wantHeart ? 'heart' : 'shrimp',
       seed: Math.random() * Math.PI * 2,
       resolved: false,
       taken: false,
@@ -791,7 +798,7 @@ window.Game = (function () {
   }
 
   /* ----------------------------------------------------------
-     アイテム（シジミ＝得点、ハート＝ライフ回復）
+     アイテム（エビ＝得点、ハート＝ライフ回復）
      ---------------------------------------------------------- */
   function drawItems() {
     var sorted = items.slice().sort(function (a, b) { return b.z - a.z; });
@@ -820,12 +827,22 @@ window.Game = (function () {
       ctx.beginPath(); ctx.arc(0, 0, 0.85, 0, Math.PI * 2); ctx.fill();
 
       if (it.kind === 'heart') drawHeartIcon();
+      else if (shrimpImg.ready) drawShrimpImage();
       else drawShellIcon();
       ctx.restore();
     }
     ctx.globalAlpha = 1;
   }
 
+  /* エビの画像（1ワールド単位 = 1 の座標で、中心に描く） */
+  function drawShrimpImage() {
+    var img = shrimpImg.img;
+    var w = CONFIG.shrimpWidth;
+    var h = w * img.naturalHeight / img.naturalWidth;
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  }
+
+  /* エビの画像が読み込めないときの代わりの図形（貝） */
   function drawShellIcon() {
     ctx.fillStyle = '#ffd98a';
     ctx.strokeStyle = 'rgba(120,74,20,0.75)';

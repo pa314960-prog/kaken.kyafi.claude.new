@@ -194,7 +194,7 @@ window.Sound = (function () {
       setAmbient(0.16, 1.2);
     },
 
-    /* アイテム（シジミ）を取った */
+    /* アイテム（エビ）を取った */
     pickup: function () {
       tone({ type: 'triangle', freq: 880, dur: 0.08, gain: 0.13 });
       tone({ type: 'triangle', freq: 1320, dur: 0.10, gain: 0.12, delay: 0.07 });
