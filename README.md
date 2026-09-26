@@ -157,6 +157,7 @@ function project(x, z) {
 | `scorePerShell` | シジミ1つの得点（倍率をかける前） |
 | `comboPerStep` / `comboStepBonus` / `comboMaxMultiplier` | 倍率が上がるまでのコンボ数・1段階の増分・倍率の上限 |
 | `characterWorldHeight` | キャラクターの高さ（ワールド単位） |
+| `characterEdgeMargin` | 画面の端とキャラクターの中心との最小の間隔。画面が狭いときはカメラが寄って、キャラクターが画面外に出ないようにする |
 | `hitHalfWidth` | 当たり判定の半幅（ワールド単位） |
 | `bobAmplitude` / `bobHz` | 水面に浮かぶ上下の揺れ（平行移動のみ）の幅と速さ |
 | `moveStiffness` | 追従バネの強さ。大きいほどキビキビ動く |

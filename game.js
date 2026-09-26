@@ -26,14 +26,15 @@ window.Game = (function () {
     cameraFollow: 0.30,       // カメラがキャラクターを追う割合（0で固定カメラ）
 
     /* --- 航路 --- */
-    laneCount: 5,
-    laneHalfWidth: 5.0,       // 航路の半分の幅（ワールド単位）
+    laneCount: 7,
+    laneHalfWidth: 7.0,       // 航路の半分の幅（ワールド単位）。レーン1本の幅は約2で以前と同じ
     spawnZ: 100,              // 障害物が現れる奥行き
     despawnZ: 2.5,            // これより手前に来た障害物は消す
 
     /* --- キャラクター --- */
     characterImage: 'assets/character.gif',
     characterWorldHeight: 2.0, // キャラクターの高さ（ワールド単位）
+    characterEdgeMargin: 1.8,  // 画面の端とキャラクターの中心との最小の間隔（ワールド単位）
     hitHalfWidth: 0.95,        // 当たり判定の半幅（ワールド単位）
     bobAmplitude: 0.07,        // 水面に浮かぶ上下の揺れ（ワールド単位・平行移動のみ）
     bobHz: 0.8,
@@ -392,6 +393,12 @@ window.Game = (function () {
     charX = clamp(charX, -CONFIG.laneHalfWidth, CONFIG.laneHalfWidth);
     // カメラはキャラクターを控えめに追う（動いている感じが出る）
     camX += (charX * CONFIG.cameraFollow - camX) * (1 - Math.exp(-6 * dt));
+    // 画面が狭い（スマホの縦持ちなど）ときは、キャラクターが画面の外に出ないようカメラを寄せる
+    var sNear = focal / CONFIG.playerZ;
+    if (sNear > 0) {
+      var maxOff = Math.max(0, W / 2 / sNear - CONFIG.characterEdgeMargin);
+      camX = clamp(camX, charX - maxOff, charX + maxOff);
+    }
   }
 
   function currentSpawnInterval() {
@@ -409,7 +416,7 @@ window.Game = (function () {
       seed: Math.random() * Math.PI * 2,
       resolved: false,
     });
-    if (elapsed > D.ramp * 0.5 && Math.random() < 0.22) {
+    if (elapsed > D.ramp * 0.35 && Math.random() < 0.35) {
       var other = (lane + 1 + Math.floor(Math.random() * (CONFIG.laneCount - 1))) % CONFIG.laneCount;
       obstacles.push({
         x: laneX(other),
