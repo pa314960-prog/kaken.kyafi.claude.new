@@ -1,7 +1,7 @@
 # キャッフィーの琵琶湖サバイバル
 
 カメラの前で体を左右に動かして遊ぶ、ブラウザだけで完結するエンドレスランナーゲームです。
-琵琶湖の水面を進むキャラクターを操作し、正面から迫ってくる網・釣り針・釣り糸を避け続けます。
+琵琶湖の水面を進むキャラクターを操作し、正面から迫ってくる網・釣り針・ペットボトルを避け続けます。
 
 ## 公開URL
 
@@ -108,7 +108,8 @@ game.js                湖・障害物・キャラクターの描画、当たり
 sound.js               効果音（Web Audio で合成。音声ファイル不要）
 main.js                カメラ・姿勢推定・画面遷移・UI・設定・記録
 assets/character.gif   キャラクター画像（400×228・背景透過）
-assets/bg/              背景写真（morning / day / sunset / night の4枚・WebP）
+assets/bg/             背景写真（morning / day / sunset / night の4枚・WebP）
+assets/obstacles/      障害物の画像（net / hook / bottle・背景透過 WebP）
 README.md              このファイル
 ```
 
