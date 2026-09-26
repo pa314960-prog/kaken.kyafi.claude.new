@@ -26,14 +26,15 @@ window.Game = (function () {
     cameraFollow: 0.30,       // カメラがキャラクターを追う割合（0で固定カメラ）
 
     /* --- 航路 --- */
-    laneCount: 5,
-    laneHalfWidth: 5.0,       // 航路の半分の幅（ワールド単位）
+    laneCount: 7,
+    laneHalfWidth: 7.0,       // 航路の半分の幅（ワールド単位）。レーン1本の幅は約2で以前と同じ
     spawnZ: 100,              // 障害物が現れる奥行き
     despawnZ: 2.5,            // これより手前に来た障害物は消す
 
     /* --- キャラクター --- */
     characterImage: 'assets/character.gif',
     characterWorldHeight: 2.0, // キャラクターの高さ（ワールド単位）
+    characterEdgeMargin: 1.8,  // 画面の端とキャラクターの中心との最小の間隔（ワールド単位）
     hitHalfWidth: 0.95,        // 当たり判定の半幅（ワールド単位）
     bobAmplitude: 0.07,        // 水面に浮かぶ上下の揺れ（ワールド単位・平行移動のみ）
     bobHz: 0.8,
@@ -89,7 +90,24 @@ window.Game = (function () {
     hard:   { label: 'むずかしい', lives: 2, speed: 46, spawnStart: 1.15, spawnMin: 0.48, ramp: 45, timeLimit: 90, hitScale: 1.10 },
   };
 
-  var OBSTACLE_KINDS = ['net', 'hook', 'wire'];
+  var OBSTACLE_KINDS = ['net', 'hook', 'bottle'];
+
+  /* 障害物の画像
+       width  : 表示する幅（ワールド単位。高さは画像の縦横比から決まる）
+       bottom : 画像の下端の高さ（ワールド単位。0 が水面、マイナスは水に沈む）
+     画像が読み込めないときは、Canvas で描いた図形で代用する。 */
+  var OBSTACLE_IMAGES = {
+    net:    { src: 'assets/obstacles/net.webp',    width: 2.5,  bottom: -0.15 },
+    hook:   { src: 'assets/obstacles/hook.webp',   width: 1.05, bottom: 0.30 },
+    bottle: { src: 'assets/obstacles/bottle.webp', width: 2.4,  bottom: -0.25 },
+  };
+  Object.keys(OBSTACLE_IMAGES).forEach(function (k) {
+    var o = OBSTACLE_IMAGES[k];
+    o.img = new Image();
+    o.ready = false;
+    o.img.onload = function () { o.ready = true; };
+    o.img.src = o.src;
+  });
 
   /* ----------------------------------------------------------
      内部状態
@@ -375,6 +393,12 @@ window.Game = (function () {
     charX = clamp(charX, -CONFIG.laneHalfWidth, CONFIG.laneHalfWidth);
     // カメラはキャラクターを控えめに追う（動いている感じが出る）
     camX += (charX * CONFIG.cameraFollow - camX) * (1 - Math.exp(-6 * dt));
+    // 画面が狭い（スマホの縦持ちなど）ときは、キャラクターが画面の外に出ないようカメラを寄せる
+    var sNear = focal / CONFIG.playerZ;
+    if (sNear > 0) {
+      var maxOff = Math.max(0, W / 2 / sNear - CONFIG.characterEdgeMargin);
+      camX = clamp(camX, charX - maxOff, charX + maxOff);
+    }
   }
 
   function currentSpawnInterval() {
@@ -392,7 +416,7 @@ window.Game = (function () {
       seed: Math.random() * Math.PI * 2,
       resolved: false,
     });
-    if (elapsed > D.ramp * 0.5 && Math.random() < 0.22) {
+    if (elapsed > D.ramp * 0.35 && Math.random() < 0.35) {
       var other = (lane + 1 + Math.floor(Math.random() * (CONFIG.laneCount - 1))) % CONFIG.laneCount;
       obstacles.push({
         x: laneX(other),
@@ -735,6 +759,8 @@ window.Game = (function () {
        ctx.scale(s, s) で遠近に合わせて拡大する。
      ---------------------------------------------------------- */
   function drawObstacles() {
+    // 夜は障害物も少し沈んだ色に見えるよう、明るさに合わせて濃さを抑える
+    var lightFactor = 0.75 + 0.25 * sceneLight();
     var sorted = obstacles.slice().sort(function (a, b) { return b.z - a.z; });
     for (var i = 0; i < sorted.length; i++) {
       var ob = sorted[i];
@@ -744,16 +770,21 @@ window.Game = (function () {
       var alpha = clamp((CONFIG.spawnZ - ob.z) / 30, 0, 1);
       var sway = Math.sin(clock * 2.0 + ob.seed) * 0.06;
 
+      var art = OBSTACLE_IMAGES[ob.kind];
       ctx.save();
-      ctx.globalAlpha = alpha;
-      // 水面より少し上に浮かせる
-      ctx.translate(p.x + sway * p.s, p.y - 0.95 * p.s);
-      ctx.scale(p.s, p.s);
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      if (ob.kind === 'net') drawNet();
-      else if (ob.kind === 'hook') drawHook();
-      else drawWire();
+      ctx.globalAlpha = alpha * lightFactor;
+      if (art && art.ready) {
+        drawObstacleImage(art, ob, p, sway, alpha);
+      } else {
+        // 画像がないときの代わりの図形（水面より少し上に浮かせる）
+        ctx.translate(p.x + sway * p.s, p.y - 0.95 * p.s);
+        ctx.scale(p.s, p.s);
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        if (ob.kind === 'net') drawNet();
+        else if (ob.kind === 'hook') drawHook();
+        else drawWire();
+      }
       ctx.restore();
     }
     ctx.globalAlpha = 1;
@@ -856,6 +887,43 @@ window.Game = (function () {
       ctx.fillText(f.text, f.x, f.y);
     }
     ctx.globalAlpha = 1;
+  }
+
+  /* 障害物の画像を、下端を水面の高さに合わせて描く。
+     水面の下に入る部分は薄くし、水面には影を落とす。 */
+  function drawObstacleImage(art, ob, p, sway, alpha) {
+    var img = art.img;
+    var w = art.width * p.s;
+    var h = w * img.naturalHeight / img.naturalWidth;
+    var x = p.x + sway * p.s - w / 2;
+    var bottomY = p.y - art.bottom * p.s;
+    var bob = Math.sin(clock * 1.7 + ob.seed) * 0.05 * p.s;
+    var y = bottomY - h + bob;
+
+    // 水面の影
+    ctx.save();
+    ctx.globalAlpha *= 0.35;
+    ctx.fillStyle = 'rgba(2,14,24,1)';
+    ctx.beginPath();
+    ctx.ellipse(p.x + sway * p.s, p.y + 0.04 * p.s, w * 0.48, Math.max(1, 0.12 * p.s), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 水面より上
+    var waterY = p.y;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x - 2, y - 2, w + 4, Math.max(0, waterY - y) + 2); ctx.clip();
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+
+    // 水面より下は透けて見えるように薄く
+    if (y + h > waterY) {
+      ctx.save();
+      ctx.globalAlpha *= 0.35;
+      ctx.beginPath(); ctx.rect(x - 2, waterY, w + 4, y + h - waterY + 2); ctx.clip();
+      ctx.drawImage(img, x, y, w, h);
+      ctx.restore();
+    }
   }
 
   function drawNet() {

@@ -1,7 +1,7 @@
 # キャッフィーの琵琶湖サバイバル
 
 カメラの前で体を左右に動かして遊ぶ、ブラウザだけで完結するエンドレスランナーゲームです。
-琵琶湖の水面を進むキャラクターを操作し、正面から迫ってくる網・釣り針・釣り糸を避け続けます。
+琵琶湖の水面を進むキャラクターを操作し、正面から迫ってくる網・釣り針・ペットボトルを避け続けます。
 
 ## 公開URL
 
@@ -108,7 +108,8 @@ game.js                湖・障害物・キャラクターの描画、当たり
 sound.js               効果音（Web Audio で合成。音声ファイル不要）
 main.js                カメラ・姿勢推定・画面遷移・UI・設定・記録
 assets/character.gif   キャラクター画像（400×228・背景透過）
-assets/bg/              背景写真（morning / day / sunset / night の4枚・WebP）
+assets/bg/             背景写真（morning / day / sunset / night の4枚・WebP）
+assets/obstacles/      障害物の画像（net / hook / bottle・背景透過 WebP）
 README.md              このファイル
 ```
 
@@ -156,6 +157,7 @@ function project(x, z) {
 | `scorePerShell` | シジミ1つの得点（倍率をかける前） |
 | `comboPerStep` / `comboStepBonus` / `comboMaxMultiplier` | 倍率が上がるまでのコンボ数・1段階の増分・倍率の上限 |
 | `characterWorldHeight` | キャラクターの高さ（ワールド単位） |
+| `characterEdgeMargin` | 画面の端とキャラクターの中心との最小の間隔。画面が狭いときはカメラが寄って、キャラクターが画面外に出ないようにする |
 | `hitHalfWidth` | 当たり判定の半幅（ワールド単位） |
 | `bobAmplitude` / `bobHz` | 水面に浮かぶ上下の揺れ（平行移動のみ）の幅と速さ |
 | `moveStiffness` | 追従バネの強さ。大きいほどキビキビ動く |
