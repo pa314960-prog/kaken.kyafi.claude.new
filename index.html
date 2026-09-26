@@ -27,26 +27,30 @@
      プレイ中の表示(スコアなど)
      ============================================================ -->
 <div class="hud" id="hud" hidden>
-  <div class="hud-item">
-    <span class="hud-label">SCORE</span>
-    <span class="hud-value"><span id="hud-score">0</span></span>
+  <div class="hud-group">
+    <div class="hud-item hud-score">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-value"><span id="hud-score">0</span></span>
+    </div>
+    <div class="hud-item hud-combo" id="hud-combo-item" hidden>
+      <span class="hud-label">COMBO</span>
+      <span class="hud-value"><span id="hud-combo">0</span><span class="hud-unit">×<span id="hud-mult">1.0</span></span></span>
+    </div>
   </div>
-  <div class="hud-item">
+  <div class="hud-item hud-time">
     <span class="hud-label">TIME</span>
     <span class="hud-value"><span id="hud-time">90</span><span class="hud-unit">s</span></span>
   </div>
-  <div class="hud-item">
-    <span class="hud-label">よけた数</span>
-    <span class="hud-value"><span id="hud-dodged">0</span></span>
-  </div>
-  <div class="hud-item hud-combo" id="hud-combo-item" hidden>
-    <span class="hud-label">COMBO</span>
-    <span class="hud-value"><span id="hud-combo">0</span><span class="hud-unit">×<span id="hud-mult">1.0</span></span></span>
-  </div>
-  <div class="hud-item">
-    <span class="hud-label">ライフ</span>
-    <!-- 印の数は難易度によって変わるので main.js が作ります -->
-    <span class="hud-pips" id="hud-lives"></span>
+  <div class="hud-group">
+    <div class="hud-item">
+      <span class="hud-label">よけた数</span>
+      <span class="hud-value"><span id="hud-dodged">0</span></span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">ライフ</span>
+      <!-- 印の数は難易度によって変わるので main.js が作ります -->
+      <span class="hud-pips" id="hud-lives"></span>
+    </div>
   </div>
 </div>
 
@@ -67,10 +71,10 @@
      操作ボタン(画面上部)
      ============================================================ -->
 <nav class="controls" id="controls" aria-label="ゲーム操作">
-  <button id="btn-start" class="btn btn-primary">▶ スタート</button>
-  <button id="btn-stop" class="btn" disabled>■ ストップ</button>
-  <button id="btn-recalib" class="btn" disabled>基準を合わせ直す</button>
-  <button id="btn-sound" class="btn" aria-pressed="true">♪ 音 ON</button>
+  <button id="btn-start" class="btn btn-primary btn-sm">▶ スタート</button>
+  <button id="btn-stop" class="btn btn-sm" disabled>■ ストップ</button>
+  <button id="btn-recalib" class="btn btn-sm" disabled><span class="lbl-long">基準を</span>合わせ直す</button>
+  <button id="btn-sound" class="btn btn-sm" aria-pressed="true">♪ 音 ON</button>
 </nav>
 
 <!-- ============================================================
@@ -101,23 +105,28 @@
      スタート画面
      ============================================================ -->
 <div class="overlay" id="overlay-title">
-  <div class="overlay-inner">
-    <h1 class="title">
-      <span class="jp">キャッフィーの琵琶湖サバイバル</span>
-      <span class="en">Biwako Survival</span>
-    </h1>
+  <div class="overlay-inner panel panel-title">
+    <div class="title-hero">
+      <!-- キャラクター画像は加工せずそのまま表示（上下のゆれは平行移動のみ） -->
+      <img class="title-character" src="assets/character.gif" alt="" aria-hidden="true">
+      <h1 class="title">
+        <span class="title-kicker">キャッフィーの</span>
+        <span class="jp">琵琶湖サバイバル</span>
+        <span class="en">Biwako Survival</span>
+      </h1>
+    </div>
 
     <ol class="howto">
-      <li>ブラウザの「カメラを許可しますか？」に <b>許可</b> を押す</li>
-      <li>カメラの前に立ち、<b>画面中央</b>で3秒待って基準位置を合わせる</li>
-      <li><b>体を左右に動かして</b>、正面から迫る網・釣り針・釣り糸をよける</li>
-      <li>ライフが尽きるか、制限時間まで生きのびるとゲーム終了</li>
+      <li><span class="howto-num">1</span><span>カメラを<b>許可</b></span></li>
+      <li><span class="howto-num">2</span><span><b>中央</b>で3秒待つ</span></li>
+      <li><span class="howto-num">3</span><span><b>左右</b>に動いてよける</span></li>
+      <li><span class="howto-num">4</span><span><b>シジミ</b>と<b>ハート</b>を拾う</span></li>
     </ol>
 
-    <p class="warn">キャッフィーはすぐには止まりません。障害物が来る前に早めに動いてください。</p>
+    <p class="warn">キャッフィーは急に止まれない。早めに動こう！</p>
 
     <div class="difficulty">
-      <span class="difficulty-label">難易度</span>
+      <span class="section-label">難易度</span>
       <div class="difficulty-buttons" id="difficulty-buttons" role="group" aria-label="難易度">
         <button class="btn btn-diff" data-difficulty="easy">
           やさしい<small>ライフ5 / ゆっくり</small>
@@ -131,11 +140,12 @@
       </div>
     </div>
 
-    <p class="best-line">
-      <span id="title-difficulty">ふつう</span> の自己最高記録: <span id="title-best">0</span>
-    </p>
-
-    <button id="btn-play" class="btn btn-primary btn-large">ゲーム開始</button>
+    <div class="title-cta">
+      <button id="btn-play" class="btn btn-primary btn-large">ゲーム開始</button>
+      <p class="best-line">
+        <span id="title-difficulty">ふつう</span> の自己最高記録 <span id="title-best">0</span>
+      </p>
+    </div>
     <p class="hint">両手を挙げてもスタートできます。カメラが使えないときは ← → キーでも操作できます。</p>
   </div>
 </div>
@@ -144,7 +154,7 @@
      キャリブレーション画面
      ============================================================ -->
 <div class="overlay overlay-light" id="overlay-calib" hidden>
-  <div class="overlay-inner">
+  <div class="overlay-inner panel">
     <h2 class="screen-title">画面の中央に立ってください</h2>
     <p class="screen-sub">あなたの基準位置と肩幅を計測しています</p>
     <div class="calib-ring">
@@ -171,33 +181,38 @@
      リザルト画面
      ============================================================ -->
 <div class="overlay" id="overlay-result" hidden>
-  <div class="overlay-inner">
+  <div class="overlay-inner panel panel-result">
     <h2 class="result-title" id="result-title">サバイバル終了！</h2>
+
+    <div class="result-hero">
+      <span class="section-label">SCORE</span>
+      <span class="result-score" id="result-score">0</span>
+      <span class="new-record" id="new-record" hidden>NEW RECORD!</span>
+    </div>
+
     <div class="result-grid">
-      <div>
-        <span class="result-label">SCORE</span>
-        <span class="result-value" id="result-score">0</span>
-      </div>
-      <div>
-        <span class="result-label">よけた数</span>
+      <div class="stat">
+        <span class="section-label">よけた数</span>
         <span class="result-value" id="result-dodged">0</span>
       </div>
-      <div>
-        <span class="result-label">最大コンボ</span>
+      <div class="stat">
+        <span class="section-label">最大コンボ</span>
         <span class="result-value" id="result-combo">0</span>
       </div>
-      <div>
-        <span class="result-label">生存時間</span>
+      <div class="stat">
+        <span class="section-label">生存時間</span>
         <span class="result-value"><span id="result-time">0</span><span class="result-unit">s</span></span>
       </div>
     </div>
+
     <p class="result-best">
-      <span id="result-difficulty">ふつう</span> の自己最高記録: <span id="result-best">0</span>
-      <span class="new-record" id="new-record" hidden>NEW RECORD!</span>
+      <span id="result-difficulty">ふつう</span> の自己最高記録 <span id="result-best">0</span>
     </p>
 
-    <p class="ranking-label">ランキング TOP5</p>
-    <ol id="ranking-list" class="ranking"></ol>
+    <div class="ranking-box">
+      <p class="section-label">ランキング TOP5</p>
+      <ol id="ranking-list" class="ranking"></ol>
+    </div>
 
     <div class="result-actions">
       <button id="btn-retry" class="btn btn-primary btn-large">もう一度</button>
@@ -211,7 +226,7 @@
      エラー画面
      ============================================================ -->
 <div class="overlay" id="overlay-error" hidden>
-  <div class="overlay-inner">
+  <div class="overlay-inner panel">
     <h2 class="screen-title is-error">エラーが発生しました</h2>
     <p class="screen-sub" id="error-message">内容不明のエラーです。</p>
     <button id="btn-reload" class="btn btn-primary btn-large">もう一度試す</button>

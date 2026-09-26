@@ -44,6 +44,18 @@ window.Game = (function () {
     moveMaxSpeed: 60,         // 最大移動速度（ワールド単位/秒）
     physicsStep: 1 / 120,     // 物理演算の固定ステップ
 
+    /* --- 背景写真（朝→昼→夕方→夜）---
+       horizon は写真の中で水平線がある高さ（写真の高さに対する比率）。
+       ゲームの水平線と重なるように写真の位置と大きさを合わせる。
+       写真が読み込めないときは、これまでどおり Canvas で描いた風景になる。 */
+    backgrounds: [
+      { src: 'assets/bg/morning.webp', horizon: 0.348, light: 0.90 },
+      { src: 'assets/bg/day.webp',     horizon: 0.346, light: 1.00 },
+      { src: 'assets/bg/sunset.webp',  horizon: 0.332, light: 0.80 },
+      { src: 'assets/bg/night.webp',   horizon: 0.404, light: 0.45 },
+    ],
+    backgroundParallax: 0.25,  // キャラクターの移動に合わせて写真を横にずらす割合
+
     /* --- 湖の演出 --- */
     waveRows: 30,
     waveSpan: 130,
@@ -123,6 +135,15 @@ window.Game = (function () {
   charImg.onload = function () { charImgReady = true; };
   charImg.onerror = function () { charImgReady = false; };
   charImg.src = CONFIG.characterImage;
+
+  /* 背景写真（1枚ずつ読み込み、読めたものだけ使う） */
+  var bgImages = CONFIG.backgrounds.map(function (b) {
+    var img = new Image();
+    var entry = { img: img, ready: false, horizon: b.horizon, light: b.light };
+    img.onload = function () { entry.ready = true; };
+    img.src = b.src;
+    return entry;
+  });
 
   /* ----------------------------------------------------------
      小さな道具
@@ -578,6 +599,7 @@ window.Game = (function () {
       rows.push(((raw + span) % span) + 2.5);
     }
     rows.sort(function (a, b) { return b - a; }); // 奥から手前の順に描く
+    var light = sceneLight();
 
     ctx.save();
     ctx.lineCap = 'round';
@@ -585,7 +607,7 @@ window.Game = (function () {
       var z = rows[r];
       var p = project(0, z);
       if (p.y > H + 80 || p.y < horizonY) continue;
-      var alpha = Math.min(0.34, 0.02 + p.s / focal * 2.6);
+      var alpha = Math.min(0.34, 0.02 + p.s / focal * 2.6) * light;
       var amp = Math.min(18, 0.09 * p.s);
       ctx.strokeStyle = 'rgba(214,244,255,' + alpha.toFixed(3) + ')';
       ctx.lineWidth = Math.max(1, Math.min(3.4, 0.012 * p.s));
@@ -599,10 +621,57 @@ window.Game = (function () {
     ctx.restore();
   }
 
+  /* ----------------------------------------------------------
+     時間帯
+       プレイの進み具合 0〜1 を、0=朝 1=昼 2=夕方 3=夜 の連続値にする。
+       待機中は elapsed が 0 なので朝、結果画面では終わった時刻のまま。
+     ---------------------------------------------------------- */
+  function dayPhase() {
+    return clamp(elapsed / D.timeLimit, 0, 1) * (bgImages.length - 1);
+  }
+
+  function smooth(t) { return t * t * (3 - 2 * t); }
+
+  /* 今の時間帯の明るさ（波や航路の線を夜は控えめにするため） */
+  function sceneLight() {
+    var ph = dayPhase(), i = Math.floor(ph), t = smooth(ph - i);
+    var a = bgImages[i], b = bgImages[Math.min(i + 1, bgImages.length - 1)];
+    return a.light + (b.light - a.light) * t;
+  }
+
+  /* 写真1枚を、水平線がゲームの水平線に重なるように画面いっぱいに描く */
+  function drawPhoto(entry, alpha) {
+    var img = entry.img, iw = img.naturalWidth, ih = img.naturalHeight;
+    var hr = entry.horizon;
+    var over = W * CONFIG.backgroundParallax * 0.1;          // 横にずらす分の余白
+    var sc = Math.max(
+      (W + over * 2) / iw,
+      horizonY / (hr * ih),
+      (H - horizonY) / ((1 - hr) * ih)
+    );
+    var dw = iw * sc, dh = ih * sc;
+    var dx = (W - dw) / 2 - camX / CONFIG.laneHalfWidth * over;
+    var dy = horizonY - hr * dh;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.globalAlpha = 1;
+  }
+
+  /* 時間帯に合わせて2枚の写真を重ねて切り替える。使えなければ false */
+  function drawPhotoBackdrop() {
+    var ph = dayPhase(), i = Math.floor(ph), t = smooth(ph - i);
+    var a = bgImages[i], b = bgImages[Math.min(i + 1, bgImages.length - 1)];
+    if (!a.ready) return false;
+    drawPhoto(a, 1);
+    if (b !== a && b.ready && t > 0.001) drawPhoto(b, t);
+    return true;
+  }
+
   /* 航路の左右の縁（ワールドの直線は画面上でも直線になる） */
   function drawChannel() {
     var farZ = CONFIG.spawnZ * 0.75, nearZ = CONFIG.despawnZ;
     ctx.save();
+    ctx.globalAlpha = 0.5 + 0.5 * sceneLight();
     for (var side = -1; side <= 1; side += 2) {
       var a = project(side * CONFIG.laneHalfWidth, farZ);
       var b = project(side * CONFIG.laneHalfWidth, nearZ);
@@ -934,17 +1003,19 @@ window.Game = (function () {
     base();
     ctx.clearRect(0, 0, W, H);
 
-    drawSky();
-    drawSun();
-    drawClouds();
-    drawRidge(horizonY * 0.50, '#a6c8d8', 1.7, 0);
-    drawRidge(horizonY * 0.34, '#6b96b0', 4.2, 120);
-    drawRidge(horizonY * 0.20, '#456f8c', 9.1, 260);
-    drawIsland(W * 0.23, Math.max(70, W * 0.10), Math.max(10, horizonY * 0.10), '#3c6884');
-    drawIsland(W * 0.60, Math.max(40, W * 0.05), Math.max(6, horizonY * 0.055), '#40708c');
-
-    drawLake();
-    drawSunGlitter();
+    // 写真の背景が使えればそれを、なければ Canvas で描いた風景を使う
+    if (!drawPhotoBackdrop()) {
+      drawSky();
+      drawSun();
+      drawClouds();
+      drawRidge(horizonY * 0.50, '#a6c8d8', 1.7, 0);
+      drawRidge(horizonY * 0.34, '#6b96b0', 4.2, 120);
+      drawRidge(horizonY * 0.20, '#456f8c', 9.1, 260);
+      drawIsland(W * 0.23, Math.max(70, W * 0.10), Math.max(10, horizonY * 0.10), '#3c6884');
+      drawIsland(W * 0.60, Math.max(40, W * 0.05), Math.max(6, horizonY * 0.055), '#40708c');
+      drawLake();
+      drawSunGlitter();
+    }
     drawWaves();
     drawChannel();
     if (opts.showLanes) drawLaneGuides();
@@ -979,6 +1050,7 @@ window.Game = (function () {
       bestCombo: bestCombo,
       multiplier: multiplier(),
       elapsed: elapsed,
+      dayPhase: dayPhase(),
       remain: Math.max(0, Math.ceil(D.timeLimit - elapsed)),
       timeLimit: D.timeLimit,
       difficulty: diffKey,
