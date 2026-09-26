@@ -10,12 +10,14 @@
    湖や障害物の描画と当たり判定は game.js の担当です。
    ============================================================ */
 
-import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+/* MediaPipe は setupPose() の中で読み込む。ここで静的に import すると、
+   CDN に届かないときにこのファイル全体が動かず、湖の風景すら描かれなくなるため。 */
 
 /* ------------------------------------------------------------
    調整用パラメータ
    ------------------------------------------------------------ */
 const CONFIG = {
+  VISION_URL: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs",
   MODEL_URL: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
   WASM_URL: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm",
   MAX_POSES: 3,
@@ -157,6 +159,7 @@ let lastCountdownShown = -1;
 function showScreen(name) {
   for (const key in screens) screens[key].hidden = key !== name;
   hudEl.hidden = name !== "play";
+  document.body.dataset.screen = name;   // 画面ごとのレイアウト調整に style.css が使う
   updateButtons();
 }
 
@@ -380,7 +383,7 @@ function showResult(reason) {
     const li = document.createElement("li");
     const rank = document.createElement("span");
     rank.className = "rank";
-    rank.textContent = (i + 1) + ".";
+    rank.textContent = String(i + 1);
     const val = document.createElement("span");
     val.textContent = s;
     li.appendChild(rank);
@@ -537,6 +540,7 @@ async function setupCamera() {
 
 async function setupPose() {
   try {
+    const { PoseLandmarker, FilesetResolver } = await import(CONFIG.VISION_URL);
     const fileset = await FilesetResolver.forVisionTasks(CONFIG.WASM_URL);
     poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: CONFIG.MODEL_URL, delegate: "GPU" },
