@@ -53,7 +53,7 @@ https://pa314960-prog.github.io/kaken.kyafi.sousa/
 
 | アイテム | 効果 |
 |---|---|
-| シジミ（金色の貝） | 120点 × 現在の倍率 |
+| エビ | 120点 × 現在の倍率 |
 | ハート | ライフを1回復（減っているときだけ出現） |
 
 取り逃してもペナルティはありません。コンボも途切れません。
@@ -110,6 +110,7 @@ main.js                カメラ・姿勢推定・画面遷移・UI・設定・�
 assets/character.gif   キャラクター画像（400×228・背景透過）
 assets/bg/             背景写真（morning / day / sunset / night の4枚・WebP）
 assets/obstacles/      障害物の画像（net / hook / bottle・背景透過 WebP）
+assets/items/          アイテムの画像（shrimp・背景透過 WebP）
 README.md              このファイル
 ```
 
@@ -154,7 +155,8 @@ function project(x, z) {
 | `itemFirstDelay` / `itemInterval` / `itemJitter` | アイテムが最初に出るまでの秒数・出現間隔・そのばらつき |
 | `itemHalfWidth` | アイテムの取得判定の半幅（ワールド単位） |
 | `heartChance` | ライフが減っているときにハートが出る割合 |
-| `scorePerShell` | シジミ1つの得点（倍率をかける前） |
+| `scorePerShrimp` | エビ1匹の得点（倍率をかける前） |
+| `shrimpImage` / `shrimpWidth` | エビの画像と表示幅（ワールド単位） |
 | `comboPerStep` / `comboStepBonus` / `comboMaxMultiplier` | 倍率が上がるまでのコンボ数・1段階の増分・倍率の上限 |
 | `characterWorldHeight` | キャラクターの高さ（ワールド単位） |
 | `characterEdgeMargin` | 画面の端とキャラクターの中心との最小の間隔。画面が狭いときはカメラが寄って、キャラクターが画面外に出ないようにする |
