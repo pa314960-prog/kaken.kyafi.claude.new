@@ -60,8 +60,12 @@ window.Game = (function () {
     /* --- 湖の演出 --- */
     waveRows: 30,
     waveSpan: 130,
-    buoySpacing: 15,
-    buoyCount: 11,
+    buoySpacing: 8,
+    buoyCount: 14,
+    buoyRadius: 0.30,         // ブイの玉の半径（ワールド単位）
+    buoyHeight: 0.12,         // 玉の中心とロープの、水面からの高さ（ワールド単位）
+    ropeWidth: 0.07,          // ロープの太さ（ワールド単位）
+    buoyImages: { left: 'assets/buoy/ball-left.webp', right: 'assets/buoy/ball-right.webp' },
 
     /* --- アイテム --- */
     itemFirstDelay: 4.0,      // 最初のアイテムが出るまでの秒数
@@ -155,6 +159,15 @@ window.Game = (function () {
   charImg.onload = function () { charImgReady = true; };
   charImg.onerror = function () { charImgReady = false; };
   charImg.src = CONFIG.characterImage;
+
+  /* ブイの玉の画像（左右の航路で、ロープの穴の向きが違う） */
+  var buoyImg = {};
+  ['left', 'right'].forEach(function (side) {
+    var e = { img: new Image(), ready: false };
+    e.img.onload = function () { e.ready = true; };
+    e.img.src = CONFIG.buoyImages[side];
+    buoyImg[side] = e;
+  });
 
   /* 得点アイテム（エビ）の画像 */
   var shrimpImg = { img: new Image(), ready: false };
@@ -698,21 +711,37 @@ window.Game = (function () {
     return true;
   }
 
-  /* 航路の左右の縁（ワールドの直線は画面上でも直線になる） */
+  /* 航路の左右の縁：ブイをつなぐロープ。
+     奥から手前へ短い区間に分けて、近いほど太く描く。 */
   function drawChannel() {
-    var farZ = CONFIG.spawnZ * 0.75, nearZ = CONFIG.despawnZ;
+    var farZ = CONFIG.spawnZ, nearZ = CONFIG.despawnZ;
+    var steps = 36;
+    var light = sceneLight();
     ctx.save();
-    ctx.globalAlpha = 0.5 + 0.5 * sceneLight();
+    ctx.lineCap = 'round';
     for (var side = -1; side <= 1; side += 2) {
-      var a = project(side * CONFIG.laneHalfWidth, farZ);
-      var b = project(side * CONFIG.laneHalfWidth, nearZ);
-      var g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-      g.addColorStop(0.00, 'rgba(234,248,255,0)');
-      g.addColorStop(0.45, 'rgba(234,248,255,0.14)');
-      g.addColorStop(1.00, 'rgba(234,248,255,0.40)');
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      var x = side * CONFIG.laneHalfWidth;
+      for (var k = 0; k < steps; k++) {
+        // 手前ほど細かく区切る（遠近で太さが大きく変わるため）
+        var t0 = k / steps, t1 = (k + 1) / steps;
+        var z0 = farZ * Math.pow(nearZ / farZ, t0);
+        var z1 = farZ * Math.pow(nearZ / farZ, t1);
+        var a = project(x, z0), b = project(x, z1);
+        var sm = (a.s + b.s) / 2;
+        var ya = a.y - CONFIG.buoyHeight * a.s, yb = b.y - CONFIG.buoyHeight * b.s;
+        ctx.globalAlpha = clamp((farZ - z0) / 25, 0, 1) * (0.55 + 0.45 * light);
+        // ロープ本体
+        ctx.strokeStyle = '#6b4a2b';
+        ctx.lineWidth = Math.max(1, CONFIG.ropeWidth * sm);
+        ctx.beginPath(); ctx.moveTo(a.x, ya); ctx.lineTo(b.x, yb); ctx.stroke();
+        // 上側のつや（編み目の明るい筋）
+        if (ctx.lineWidth > 2.5) {
+          ctx.strokeStyle = 'rgba(214,176,122,0.55)';
+          ctx.lineWidth = ctx.lineWidth * 0.3;
+          var off = CONFIG.ropeWidth * 0.22 * sm;
+          ctx.beginPath(); ctx.moveTo(a.x, ya - off); ctx.lineTo(b.x, yb - off); ctx.stroke();
+        }
+      }
     }
     ctx.restore();
   }
@@ -736,24 +765,41 @@ window.Game = (function () {
   }
 
   /* 航路の縁に浮かぶブイ。速度感を出す目印になる */
+  /* ロープに通したブイの玉。写真の玉を遠近に合わせた大きさで描く */
   function drawBuoys() {
+    var light = sceneLight();
+    // 奥から手前の順に描く
+    var zs = buoys.slice().sort(function (a, b) { return b - a; });
     ctx.save();
-    for (var i = 0; i < buoys.length; i++) {
-      var z = buoys[i];
+    for (var i = 0; i < zs.length; i++) {
+      var z = zs[i];
       for (var side = -1; side <= 1; side += 2) {
         var p = project(side * CONFIG.laneHalfWidth, z);
-        if (p.y < horizonY || p.y > H + 40) continue;
-        var r = clamp(0.16 * p.s, 1.2, 16);
-        var bob = Math.sin(clock * 1.8 + z * 0.4) * r * 0.35;
-        ctx.globalAlpha = clamp(z / 10, 0, 1) * Math.min(1, 40 / z);
-        // 本体
-        ctx.fillStyle = '#ff8a4c';
-        ctx.beginPath(); ctx.arc(p.x, p.y - r * 0.7 + bob, r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.beginPath(); ctx.arc(p.x - r * 0.3, p.y - r * 1.0 + bob, r * 0.32, 0, Math.PI * 2); ctx.fill();
+        if (p.y < horizonY || p.y > H + 80) continue;
+        var r = Math.max(1.2, CONFIG.buoyRadius * p.s);
+        var bob = Math.sin(clock * 1.8 + z * 0.4 + side) * r * 0.12;
+        var cy = p.y - CONFIG.buoyHeight * p.s + bob;
+        var fade = clamp((CONFIG.spawnZ - z) / 25, 0, 1) * clamp(z / 4, 0, 1);
+
         // 水面の映り込み
-        ctx.fillStyle = 'rgba(255,138,76,0.35)';
-        ctx.beginPath(); ctx.ellipse(p.x, p.y + r * 0.35, r * 1.1, r * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = fade * 0.35;
+        ctx.fillStyle = 'rgba(255,120,50,1)';
+        ctx.beginPath(); ctx.ellipse(p.x, p.y + r * 0.35, r * 1.05, r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
+
+        ctx.globalAlpha = fade;
+        var e = buoyImg[side < 0 ? 'left' : 'right'];
+        if (e.ready) {
+          ctx.drawImage(e.img, p.x - r, cy - r, r * 2, r * 2);
+        } else {
+          ctx.fillStyle = '#ff7a33';
+          ctx.beginPath(); ctx.arc(p.x, cy, r, 0, Math.PI * 2); ctx.fill();
+        }
+        // 夜は玉も暗く見せる
+        if (light < 0.95) {
+          ctx.globalAlpha = fade * (1 - light) * 0.6;
+          ctx.fillStyle = '#04121e';
+          ctx.beginPath(); ctx.arc(p.x, cy, r * 0.98, 0, Math.PI * 2); ctx.fill();
+        }
       }
     }
     ctx.globalAlpha = 1;
