@@ -485,9 +485,13 @@ setSmoothing.addEventListener("input", () => {
   saveSettings();
 });
 setMirror.addEventListener("change", () => {
+  const changed = settings.mirror !== setMirror.checked;
   settings.mirror = setMirror.checked;
   videoEl.classList.toggle("mirrored", settings.mirror);
   overlayCanvas.classList.toggle("mirrored", settings.mirror);
+  // 基準位置は反転したあとの座標で覚えているので、反転を切り替えたら基準も左右を入れ替える。
+  // そうしないと、体を動かしていなくてもキャラクターが大きくずれる。
+  if (changed) calib.centerX = 1 - calib.centerX;
   smoothedX = null;
   saveSettings();
 });

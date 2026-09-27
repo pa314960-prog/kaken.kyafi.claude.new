@@ -226,6 +226,13 @@ window.Game = (function () {
     return { x: cx + (x - camX) * s, y: horizonY + camH * s, s: s };
   }
 
+  /* キャラクターが動ける端 = 一番外側のレーンの中心。
+     航路の縁（ブイの位置）まで行けると、外側のレーンの障害物の当たり判定から外れてしまい、
+     端にいるだけで一度も当たらなくなるため。 */
+  function maxCharX() {
+    return laneX(CONFIG.laneCount - 1);
+  }
+
   function laneX(i) {
     var w = (CONFIG.laneHalfWidth * 2) / CONFIG.laneCount;
     return -CONFIG.laneHalfWidth + w * (i + 0.5);
@@ -289,7 +296,7 @@ window.Game = (function () {
        nx: -1(左端) 〜 +1(右端)
      ---------------------------------------------------------- */
   function setInput(nx) {
-    charTargetX = clamp(nx, -1, 1) * CONFIG.laneHalfWidth;
+    charTargetX = clamp(nx, -1, 1) * maxCharX();
   }
 
   /* ----------------------------------------------------------
@@ -410,7 +417,7 @@ window.Game = (function () {
       charX += charVelX * h;
       remain -= h;
     }
-    charX = clamp(charX, -CONFIG.laneHalfWidth, CONFIG.laneHalfWidth);
+    charX = clamp(charX, -maxCharX(), maxCharX());
     // カメラはキャラクターを控えめに追う（動いている感じが出る）
     camX += (charX * CONFIG.cameraFollow - camX) * (1 - Math.exp(-6 * dt));
     // 画面が狭い（スマホの縦持ちなど）ときは、キャラクターが画面の外に出ないようカメラを寄せる
