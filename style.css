@@ -112,6 +112,29 @@ body {
 
 
 /* ------------------------------------------------------------
+   キャラクターの表記（プレイ中だけ左上に表示）
+   ------------------------------------------------------------ */
+.character-credit {
+  display: none;
+  position: fixed;
+  top: clamp(12px, 2vh, 20px);
+  left: clamp(12px, 2vw, 26px);
+  z-index: 5;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--glass-line);
+  border-radius: 999px;
+  background: rgba(4, 24, 38, .62);
+  backdrop-filter: blur(8px);
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--foam);
+  pointer-events: none;
+}
+body[data-screen="play"] .character-credit { display: block; }
+
+/* ------------------------------------------------------------
    プレイ中のスコア表示
    左：スコアとコンボ / 中央：残り時間 / 右：よけた数とライフ
    ------------------------------------------------------------ */
