@@ -149,6 +149,7 @@ let handsTimer = 0;
 let keyboardX = 0;
 let keyboardActive = 0; // キー操作してからの残り猶予（秒）
 let keyLeft = false, keyRight = false;
+let keyboardOnly = false; // カメラなしでキーボードだけで遊んでいる
 
 let lastHudUpdate = 0;
 let lastCountdownShown = -1;
@@ -439,6 +440,13 @@ btnCalibCancel.addEventListener("click", requestStop);
 btnRecalib.addEventListener("click", recalibrateNow);
 btnBackTitle.addEventListener("click", () => { Sound.unlock(); Sound.click(); enterState(S.TITLE); });
 btnReload.addEventListener("click", () => location.reload());
+/* カメラや姿勢推定が使えなくても、キーボードだけで遊べるようにする */
+$("btn-keyboard").addEventListener("click", () => {
+  Sound.unlock();
+  Sound.click();
+  keyboardOnly = true;
+  enterState(S.TITLE);
+});
 
 btnSound.addEventListener("click", () => {
   Sound.unlock();
@@ -542,8 +550,39 @@ async function setupCamera() {
   });
 }
 
+/* オフライン版（tools/build-offline.mjs で作る）では、部品を同梱の lib/ から読み込む。
+   ダブルクリックで開いたページ（file://）では fetch や import() が使えないため、
+   ・vision_bundle と WASM の読み込み役は普通の <script> で先に読み込み済み
+   ・WASM 本体とモデルは lib/ の中に文字データとして入っているので、それを渡す */
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function createOfflinePose() {
+  const off = window.OFFLINE_MEDIAPIPE;
+  const { PoseLandmarker } = off.vision;
+  // wasmLoaderPath を空にすると、読み込み済みの ModuleFactory がそのまま使われる。
+  // self.Module.wasmBinary を渡しておくと、WASM をファイルから取りに行かない。
+  self.Module = { wasmBinary: base64ToBytes(off.wasmBase64).buffer };
+  return PoseLandmarker.createFromOptions(
+    { wasmLoaderPath: "", wasmBinaryPath: "vision_wasm_internal.wasm" },
+    {
+      baseOptions: { modelAssetBuffer: base64ToBytes(off.modelBase64), delegate: "GPU" },
+      runningMode: "VIDEO",
+      numPoses: CONFIG.MAX_POSES,
+    }
+  );
+}
+
 async function setupPose() {
   try {
+    if (window.OFFLINE_MEDIAPIPE) {
+      poseLandmarker = await createOfflinePose();
+      return;
+    }
     const { PoseLandmarker, FilesetResolver } = await import(CONFIG.VISION_URL);
     const fileset = await FilesetResolver.forVisionTasks(CONFIG.WASM_URL);
     poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
@@ -552,7 +591,10 @@ async function setupPose() {
       numPoses: CONFIG.MAX_POSES,
     });
   } catch (err) {
-    throw new Error("姿勢推定モデルの読み込みに失敗しました。通信環境を確認して、ページを再読み込みしてください。");
+    console.error(err);
+    throw new Error(window.OFFLINE_MEDIAPIPE
+      ? "姿勢推定モデルの読み込みに失敗しました。フォルダの中身（lib フォルダ）がそろっているか確認して、ページを再読み込みしてください。"
+      : "姿勢推定モデルの読み込みに失敗しました。通信環境を確認して、ページを再読み込みしてください。");
   }
 }
 
@@ -598,7 +640,7 @@ function loop(now) {
     keyboardX = Math.max(-1, Math.min(1, keyboardX + dir * CONFIG.KEYBOARD_SPEED * dt));
   }
   let input = null;
-  if (keyboardActive > 0) {
+  if (keyboardActive > 0 || keyboardOnly) {
     input = keyboardX;
   } else {
     input = poseToNormalized();
@@ -680,7 +722,8 @@ function loop(now) {
     if (state === S.PLAY) updateHud();
     updateButtons();
     if (state !== S.ERROR) {
-      if (!tracked) setStatus("カメラの前に立ってください");
+      if (keyboardOnly) setStatus("キーボード（← →）で操作します");
+      else if (!tracked) setStatus("カメラの前に立ってください");
       else if (state === S.CALIB) setStatus("中央でじっとしていてください");
       else if (state === S.PLAY) setStatus("体を左右に動かしてよけよう");
       else setStatus("追跡できています");
