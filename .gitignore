@@ -1,0 +1,3 @@
+﻿# オフライン版の生成物（node tools/build-offline.mjs で作る）
+offline/
+.offline-cache/
