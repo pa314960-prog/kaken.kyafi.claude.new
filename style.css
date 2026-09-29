@@ -828,6 +828,29 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
 }
 
 .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.result-actions .btn[hidden] { display: none; }
+
+/* クリアしたときの「1つ上に挑戦する？」 */
+.result-offer {
+  margin: 0;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: clamp(.95rem, 2.4vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: #2a1b05;
+  background: linear-gradient(180deg, var(--sun-bright), var(--sun));
+  box-shadow: 0 0 18px rgba(255,190,90,.45);
+  animation: shine 2.4s ease-in-out infinite;
+}
+.result-offer[hidden] { display: none; }
+.result-auto {
+  margin: 0;
+  font-family: var(--font-num);
+  font-size: .72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ------------------------------------------------------------
    画面が狭いとき(スマホ)
@@ -873,6 +896,6 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
 
 /* 動きを減らす設定にしている人には、装飾アニメーションを止める */
 @media (prefers-reduced-motion: reduce) {
-  .bubbles span, .new-record, .countdown-num, .title-character,
+  .bubbles span, .new-record, .result-offer, .countdown-num, .title-character,
   .hud-combo.boosted .hud-value, .panel, .overlay { animation: none; }
 }

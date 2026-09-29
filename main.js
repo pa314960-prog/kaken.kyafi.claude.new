@@ -30,6 +30,8 @@ const CONFIG = {
   DEADZONE: 0.06,              // この範囲の微動は無視する
   KEYBOARD_TAKEOVER_SECONDS: 2.5,
   KEYBOARD_SPEED: 1.6,         // キー操作のときの移動速度（1秒あたり）
+  RESULT_IDLE_SECONDS: 10,     // 結果画面で何もしなければタイトルに戻るまでの秒数
+  RESULT_DONE_SECONDS: 8,      // 挑戦を遊び終えたあと、タイトルに戻るまでの秒数
 
   SETTINGS_KEY: "biwako_survival_settings_v1",
   RANKING_KEY: "biwako_survival_ranking_v2",
@@ -135,6 +137,8 @@ function bestFor(diff) {
 const S = { BOOT: "BOOT", TITLE: "TITLE", CALIB: "CALIB", COUNTDOWN: "COUNTDOWN", PLAY: "PLAY", RESULT: "RESULT", ERROR: "ERROR" };
 let state = S.BOOT;
 let stateTimer = 0;
+let runDifficulty = "normal"; // 今回のプレイの難易度（挑戦中は settings.difficulty より1つ上）
+let resultMode = "retry";     // 結果画面でできること（setupResultActions を参照）
 
 let poseLandmarker = null;
 let landmarks = null;
@@ -184,6 +188,8 @@ function enterState(next) {
   handsTimer = 0;
 
   if (next === S.TITLE) {
+    // 挑戦（1つ上の難易度）は1回きり。タイトルに戻ったら次の人は基本の難易度から
+    runDifficulty = settings.difficulty;
     Game.stop();
     Game.resetRun();
     refreshTitleBest();
@@ -197,7 +203,7 @@ function enterState(next) {
     lastCountdownShown = -1;
     showScreen("countdown");
   } else if (next === S.PLAY) {
-    Game.setDifficulty(settings.difficulty);
+    Game.setDifficulty(runDifficulty);
     Game.start();
     buildLifePips();
     showScreen("play");
@@ -358,15 +364,70 @@ function refreshTitleBest() {
   $("title-best").textContent = bestFor(settings.difficulty);
 }
 
+/* 1つ上の難易度（なければ null） */
+function nextDifficulty(key) {
+  const i = DIFF_ORDER.indexOf(key);
+  return i >= 0 && i < DIFF_ORDER.length - 1 ? DIFF_ORDER[i + 1] : null;
+}
+
+/* 結果画面でできること
+   offer: 基本の難易度をクリアした → 両手で1つ上に挑戦 / 何もしなければタイトルへ
+   retry: 基本の難易度で失敗・中断した → 両手でもう一度 / 何もしなければタイトルへ
+   done : 挑戦を遊び終えた → 少ししたらタイトルへ（両手を挙げても続けない） */
+function setupResultActions(reason) {
+  const challenged = runDifficulty !== settings.difficulty;
+  const next = nextDifficulty(runDifficulty);
+  if (challenged) resultMode = "done";
+  else if (reason === "time" && next) resultMode = "offer";
+  else resultMode = "retry";
+
+  const offerEl = $("result-offer");
+  offerEl.hidden = resultMode !== "offer";
+  if (resultMode === "offer") {
+    offerEl.textContent = `${difficultyLabel(next)} に挑戦する？ ― 両手を挙げて挑戦！`;
+    btnRetry.textContent = `${difficultyLabel(next)} に挑戦`;
+    $("result-hint").textContent = "両手を挙げると挑戦できます。";
+  } else if (resultMode === "retry") {
+    btnRetry.textContent = "もう一度";
+    $("result-hint").textContent = "両手を挙げるともう一度遊べます。";
+  } else {
+    $("result-hint").textContent = "遊んでくれてありがとう！";
+  }
+  btnRetry.hidden = resultMode === "done";
+  updateResultAuto();
+}
+
+/* 何もしなければタイトルに戻るまでの残り秒数を出す */
+let lastResultAutoShown = -1;
+function updateResultAuto() {
+  const total = resultMode === "done" ? CONFIG.RESULT_DONE_SECONDS : CONFIG.RESULT_IDLE_SECONDS;
+  const remain = Math.max(0, Math.ceil(total - stateTimer));
+  if (remain === lastResultAutoShown) return;
+  lastResultAutoShown = remain;
+  // 画面が低いと下の案内が隠れるので、大事な操作はこの行（タイトルのすぐ下）にも書く
+  $("result-auto").textContent =
+    resultMode === "offer" ? `何もしなければ ${remain} 秒後に終わります`
+    : resultMode === "retry" ? `両手を挙げるともう一度。何もしなければ ${remain} 秒後にタイトルへ`
+    : `${remain} 秒後にタイトルに戻ります`;
+}
+
+/* 結果画面で「続ける」を選んだとき（両手・ボタン・Enter） */
+function resultContinue() {
+  if (resultMode === "done") { enterState(S.TITLE); return; }
+  if (resultMode === "offer") runDifficulty = nextDifficulty(runDifficulty);
+  enterState(S.CALIB);
+}
+
 function showResult(reason) {
   const st = Game.getStats();
-  const prevBest = bestFor(settings.difficulty);
+  const prevBest = bestFor(runDifficulty);
   const isRecord = st.score > prevBest;
-  const top = addScore(settings.difficulty, st.score);
+  const top = addScore(runDifficulty, st.score);
+  const challenged = runDifficulty !== settings.difficulty;
 
   const titles = {
     life: "つかまってしまった…",
-    time: "サバイバル成功！",
+    time: challenged ? `${difficultyLabel(runDifficulty)}もクリア！` : "サバイバル成功！",
     manual: "ストップしました",
   };
   $("result-title").textContent = titles[reason] || "サバイバル終了！";
@@ -374,7 +435,7 @@ function showResult(reason) {
   $("result-dodged").textContent = st.dodged;
   $("result-combo").textContent = st.bestCombo;
   $("result-time").textContent = Math.floor(st.elapsed);
-  $("result-difficulty").textContent = difficultyLabel(settings.difficulty);
+  $("result-difficulty").textContent = difficultyLabel(runDifficulty);
   $("result-best").textContent = top.length ? top[0] : st.score;
   $("new-record").hidden = !isRecord;
 
@@ -400,6 +461,8 @@ function showResult(reason) {
   if (isRecord) Sound.record();
 
   enterState(S.RESULT);
+  lastResultAutoShown = -1;
+  setupResultActions(reason);
 }
 
 /* ------------------------------------------------------------
@@ -408,7 +471,8 @@ function showResult(reason) {
 function requestStart() {
   Sound.unlock();
   Sound.click();
-  if (state === S.TITLE || state === S.RESULT) enterState(S.CALIB);
+  if (state === S.TITLE) enterState(S.CALIB);
+  else if (state === S.RESULT) resultContinue();
 }
 function requestStop() {
   Sound.unlock();
@@ -706,9 +770,14 @@ function loop(now) {
       break;
     }
 
-    case S.RESULT:
-      if (handsTimer >= CONFIG.HANDS_HOLD_SECONDS) enterState(S.CALIB);
+    case S.RESULT: {
+      // 挑戦を遊び終えたあとは、両手を挙げても続けない（列を進めるため）
+      if (resultMode !== "done" && handsTimer >= CONFIG.HANDS_HOLD_SECONDS) { resultContinue(); break; }
+      const limit = resultMode === "done" ? CONFIG.RESULT_DONE_SECONDS : CONFIG.RESULT_IDLE_SECONDS;
+      if (stateTimer >= limit) { enterState(S.TITLE); break; }
+      updateResultAuto();
       break;
+    }
   }
 
   // --- ゲーム世界の更新と描画 ---
@@ -743,6 +812,7 @@ function loop(now) {
    ------------------------------------------------------------ */
 async function main() {
   loadSettings();
+  runDifficulty = settings.difficulty;
   applySettingsToUI();
 
   btnSound.textContent = Sound.isEnabled() ? "♪ 音 ON" : "♪ 音 OFF";
