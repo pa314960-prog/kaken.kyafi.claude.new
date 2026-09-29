@@ -30,6 +30,9 @@ const CONFIG = {
   DEADZONE: 0.06,              // この範囲の微動は無視する
   KEYBOARD_TAKEOVER_SECONDS: 2.5,
   KEYBOARD_SPEED: 1.6,         // キー操作のときの移動速度（1秒あたり）
+  DIFF_ZONE_EDGE: 0.11,        // タイトル画面で難易度を体で選ぶとき、中央とみなす幅（映像の中心から左右それぞれ）
+  DIFF_ZONE_MARGIN: 0.025,     // 境目でちらつかないための余裕
+  DIFF_ZONE_HOLD_SECONDS: 0.5, // この時間とどまったら難易度を切り替える
 
   SETTINGS_KEY: "biwako_survival_settings_v1",
   RANKING_KEY: "biwako_survival_ranking_v2",
@@ -456,18 +459,51 @@ btnSound.addEventListener("click", () => {
   if (on) Sound.click();
 });
 
-/* 難易度ボタン */
+/* 難易度の選択（ボタン・キーボード・体の位置のどれからでも） */
+const DIFF_ORDER = ["easy", "normal", "hard"];
+function selectDifficulty(key) {
+  if (!DIFF_ORDER.includes(key) || key === settings.difficulty) return;
+  Sound.unlock();
+  Sound.click();
+  settings.difficulty = key;
+  saveSettings();
+  document.querySelectorAll(".btn-diff").forEach((b) => b.classList.toggle("is-selected", b.dataset.difficulty === key));
+  Game.setDifficulty(settings.difficulty);
+  refreshTitleBest();
+}
+function stepDifficulty(dir) {
+  const i = DIFF_ORDER.indexOf(settings.difficulty);
+  selectDifficulty(DIFF_ORDER[Math.max(0, Math.min(DIFF_ORDER.length - 1, i + dir))]);
+}
 document.querySelectorAll(".btn-diff").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    Sound.unlock();
-    Sound.click();
-    settings.difficulty = btn.dataset.difficulty;
-    saveSettings();
-    document.querySelectorAll(".btn-diff").forEach((b) => b.classList.toggle("is-selected", b === btn));
-    Game.setDifficulty(settings.difficulty);
-    refreshTitleBest();
-  });
+  btn.addEventListener("click", () => selectDifficulty(btn.dataset.difficulty));
 });
+
+/* タイトル画面では、立っている位置（カメラ映像の左・中央・右）で難易度を選ぶ。
+   境目でちらつかないよう、同じ場所に少しとどまってから切り替える。 */
+let diffZone = null;       // 今いる場所（0:左 1:中央 2:右）
+let diffZoneTimer = 0;
+let diffZoneApplied = null; // 最後に難易度へ反映した場所
+function updateBodyDifficulty(h, dt) {
+  if (!h || keyboardActive > 0) { diffZone = null; diffZoneTimer = 0; return; }
+  const off = h.x - 0.5;
+  let zone;
+  if (diffZone === null) zone = off < -CONFIG.DIFF_ZONE_EDGE ? 0 : off > CONFIG.DIFF_ZONE_EDGE ? 2 : 1;
+  else {
+    // 今の場所から出るには、境目を少し越える必要がある
+    const edge = CONFIG.DIFF_ZONE_EDGE, m = CONFIG.DIFF_ZONE_MARGIN;
+    zone = diffZone;
+    if (diffZone === 1) { if (off < -edge - m) zone = 0; else if (off > edge + m) zone = 2; }
+    else if (diffZone === 0) { if (off > -edge + m) zone = off > edge + m ? 2 : 1; }
+    else if (off < edge - m) zone = off < -edge - m ? 0 : 1;
+  }
+  if (zone !== diffZone) { diffZone = zone; diffZoneTimer = 0; }
+  diffZoneTimer += dt;
+  if (diffZoneTimer >= CONFIG.DIFF_ZONE_HOLD_SECONDS && diffZone !== diffZoneApplied) {
+    diffZoneApplied = diffZone;
+    selectDifficulty(DIFF_ORDER[diffZone]);
+  }
+}
 
 /* 設定 */
 function applySettingsToUI() {
@@ -511,7 +547,18 @@ window.addEventListener("keydown", (e) => {
   else if (e.key === " " || e.key === "Enter") {
     if (state === S.TITLE || state === S.RESULT) { requestStart(); e.preventDefault(); }
   } else if (e.key === "Escape") {
-    requestStop();
+    // 結果画面からはタイトル（難易度選択）に戻る
+    if (state === S.RESULT) { Sound.unlock(); Sound.click(); enterState(S.TITLE); }
+    else requestStop();
+  } else if (state === S.TITLE && (e.key === "1" || e.key === "2" || e.key === "3")) {
+    selectDifficulty(DIFF_ORDER[Number(e.key) - 1]);
+    // 体の位置で選んだ難易度より、キーで選んだほうを優先する（同じ場所にいる間は上書きしない）
+    diffZoneApplied = diffZone;
+  }
+  // タイトル画面では ← → で難易度も切り替える（キャラクターも一緒に動く）
+  if (state === S.TITLE && !e.repeat && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+    stepDifficulty(e.key === "ArrowLeft" ? -1 : 1);
+    diffZoneApplied = diffZone;
   }
 });
 window.addEventListener("keyup", (e) => {
@@ -656,6 +703,8 @@ function loop(now) {
   stateTimer += dt;
   switch (state) {
     case S.TITLE:
+      // 両手を挙げている間は難易度を動かさない（挙げた瞬間に肩が揺れても変わらないように）
+      if (handsTimer === 0) updateBodyDifficulty(tracked ? h : null, dt);
       if (handsTimer >= CONFIG.HANDS_HOLD_SECONDS) enterState(S.CALIB);
       break;
 
