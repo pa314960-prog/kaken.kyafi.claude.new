@@ -460,6 +460,17 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
 }
 .settings input[type="range"] { width: 100%; accent-color: var(--sun); }
 .settings input[type="checkbox"] { accent-color: var(--sun); margin-top: 2px; }
+.settings select {
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--lake-bright);
+  background: rgba(6,24,40,.7);
+  border: 1px solid rgba(160,225,250,.25);
+  border-radius: 8px;
+  accent-color: var(--sun);
+}
+.settings select option { color: #0b2236; background: #eaf8ff; }
 
 .hint { margin: 0; font-size: .72rem; color: var(--muted); opacity: .9; line-height: 1.6; }
 .hint a { color: var(--lake-bright); }
@@ -620,49 +631,7 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   color: rgba(255,200,130,.95);
 }
 
-/* --- 難易度の選択 --- */
-.difficulty { display: grid; justify-items: center; gap: 8px; width: 100%; }
 
-.difficulty-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  width: 100%;
-}
-
-.btn-diff {
-  position: relative;
-  display: grid;
-  gap: 3px;
-  padding: 11px 10px;
-  border-radius: var(--radius-md);
-  box-shadow: none;
-}
-.btn-diff small {
-  font-size: .64rem;
-  font-weight: 500;
-  opacity: .72;
-}
-.btn-diff.is-selected {
-  border-color: var(--sun);
-  color: var(--sun-bright);
-  background: linear-gradient(180deg, rgba(120,86,24,.55), rgba(40,30,10,.6));
-  box-shadow: 0 0 22px rgba(255,190,90,.28), inset 0 0 18px rgba(255,190,90,.12);
-}
-/* 選択中の印 */
-.btn-diff.is-selected::after {
-  content: "✓";
-  position: absolute;
-  top: -8px; right: -6px;
-  display: grid;
-  place-items: center;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  font-size: .7rem;
-  color: #2a1b05;
-  background: var(--sun);
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-}
 
 .title-cta { display: grid; justify-items: center; gap: 8px; margin-top: 4px; }
 
@@ -893,8 +862,6 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   .howto li { grid-template-columns: auto 1fr; justify-items: start; align-items: center; padding: 8px 10px; font-size: .74rem; text-align: left; }
   .title-character { height: 64px; }
   .title .jp { font-size: 1.9rem; }
-  .btn-diff { padding: 10px 4px; font-size: .8rem; }
-  .btn-diff small { font-size: .58rem; }
   .btn-large { padding: 14px 44px; }
 }
 

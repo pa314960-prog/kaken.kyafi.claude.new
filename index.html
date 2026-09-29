@@ -100,6 +100,15 @@
       <input type="checkbox" id="set-mirror" checked>
       <span>左右反転(動きが逆に感じる場合はチェックを外す)</span>
     </label>
+    <!-- 難易度は画面には出さない裏設定。タイトル画面で 1・2・3 キーでも切り替えられる -->
+    <label>
+      <span>難易度(タイトル画面で 1・2・3 キーでも変更可)</span>
+      <select id="set-difficulty">
+        <option value="easy">やさしい(ライフ5 / ゆっくり)</option>
+        <option value="normal">ふつう(ライフ3 / 標準)</option>
+        <option value="hard">むずかしい(ライフ2 / 高速)</option>
+      </select>
+    </label>
     <p class="hint">使い方は <a href="README.md">README.md</a> を参照してください。</p>
   </div>
 </details>
@@ -128,28 +137,13 @@
 
     <p class="warn">キャッフィーは急に止まれない。早めに動こう！</p>
 
-    <div class="difficulty">
-      <span class="section-label">難易度 ― 左・中央・右に立って選ぶ</span>
-      <div class="difficulty-buttons" id="difficulty-buttons" role="group" aria-label="難易度">
-        <button class="btn btn-diff" data-difficulty="easy">
-          やさしい<small>ライフ5 / ゆっくり</small>
-        </button>
-        <button class="btn btn-diff is-selected" data-difficulty="normal">
-          ふつう<small>ライフ3 / 標準</small>
-        </button>
-        <button class="btn btn-diff" data-difficulty="hard">
-          むずかしい<small>ライフ2 / 高速</small>
-        </button>
-      </div>
-    </div>
-
     <div class="title-cta">
       <button id="btn-play" class="btn btn-primary btn-large">ゲーム開始</button>
       <p class="best-line">
         <span id="title-difficulty">ふつう</span> の自己最高記録 <span id="title-best">0</span>
       </p>
     </div>
-    <p class="hint">両手を挙げるとスタート。キーボードなら ← → か 1・2・3 で難易度、Enter でスタートできます。</p>
+    <p class="hint">両手を挙げるとスタート。キーボードなら Enter でスタートできます。</p>
   </div>
 </div>
 
@@ -219,9 +213,9 @@
 
     <div class="result-actions">
       <button id="btn-retry" class="btn btn-primary btn-large">もう一度</button>
-      <button id="btn-back-title" class="btn">難易度を変える</button>
+      <button id="btn-back-title" class="btn">タイトルへ</button>
     </div>
-    <p class="hint">両手を挙げてもリトライできます。Esc キーで難易度選択に戻ります。</p>
+    <p class="hint">両手を挙げてもリトライできます。</p>
   </div>
 </div>
 
