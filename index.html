@@ -128,14 +128,14 @@
       </h1>
     </div>
 
-    <ol class="howto">
-      <li><span class="howto-num">1</span><span>カメラを<b>許可</b></span></li>
-      <li><span class="howto-num">2</span><span><b>中央</b>で3秒待つ</span></li>
-      <li><span class="howto-num">3</span><span><b>左右</b>に動いてよける</span></li>
-      <li><span class="howto-num">4</span><span><b>エビ</b>と<b>ハート</b>を拾う</span></li>
-    </ol>
-
-    <p class="warn">キャッフィーは急に止まれない。早めに動こう！</p>
+    <!-- 体験会でひと目でわかるよう、スタートの仕方だけを大きく出す -->
+    <div class="start-cue">
+      <svg class="start-cue-figure" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="15" r="7" />
+        <path d="M32 23 V44 M32 44 L24 60 M32 44 L40 60 M32 28 L18 8 M32 28 L46 8" />
+      </svg>
+      <p class="start-cue-text"><b>両手を挙げて</b>スタート！</p>
+    </div>
 
     <div class="title-cta">
       <button id="btn-play" class="btn btn-primary btn-large">ゲーム開始</button>
@@ -143,7 +143,7 @@
         <span id="title-difficulty">ふつう</span> の自己最高記録 <span id="title-best">0</span>
       </p>
     </div>
-    <p class="hint">両手を挙げるとスタート。キーボードなら Enter でスタートできます。</p>
+    <p class="hint">キーボードなら Enter でもスタートできます。</p>
   </div>
 </div>
 

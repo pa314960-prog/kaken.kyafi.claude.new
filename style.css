@@ -588,47 +588,43 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   color: rgba(120,210,240,.85);
 }
 
-/* 遊び方：4つのステップを並べる */
-.howto {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 0;
+/* スタートの仕方（両手を挙げる）を大きく見せる */
+.start-cue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 18px);
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-.howto li {
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 6px;
-  padding: 12px 8px 12px;
-  border: 1px solid rgba(160,225,250,.14);
+  margin: 4px 0 0;
+  padding: clamp(12px, 2.4vw, 20px) 16px;
+  border: 1px solid rgba(255,200,120,.35);
   border-radius: var(--radius-md);
-  background: rgba(2,16,26,.35);
-  font-size: .8rem;
-  line-height: 1.5;
-  color: var(--text);
+  background: linear-gradient(180deg, rgba(120,86,24,.28), rgba(2,16,26,.35));
+  box-shadow: inset 0 0 24px rgba(255,190,90,.08);
 }
-.howto b { color: var(--sun); font-weight: 900; }
-.howto-num {
-  display: grid;
-  place-items: center;
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  font-family: var(--font-num);
-  font-size: .78rem;
-  font-weight: 700;
-  color: #2a1b05;
-  background: linear-gradient(180deg, #ffeab8, #f0b23c);
-  box-shadow: 0 0 12px rgba(255,190,90,.4);
+.start-cue-figure {
+  flex: none;
+  width: clamp(44px, 7vw, 64px);
+  height: clamp(44px, 7vw, 64px);
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: cheer 1.6s ease-in-out infinite;
 }
-
-.warn {
+.start-cue-figure circle { fill: var(--sun); stroke: none; }
+.start-cue-text {
   margin: 0;
-  font-size: .8rem;
-  color: rgba(255,200,130,.95);
+  font-size: clamp(1.4rem, 4.2vw, 2.3rem);
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--foam);
+}
+.start-cue-text b { color: var(--sun); }
+@keyframes cheer {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
 }
 
 
@@ -881,8 +877,6 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   .panel { padding: 20px 16px; border-radius: 18px; }
   .overlay-inner { gap: 14px; }
 
-  .howto { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .howto li { grid-template-columns: auto 1fr; justify-items: start; align-items: center; padding: 8px 10px; font-size: .74rem; text-align: left; }
   .title-character { height: 64px; }
   .title .jp { font-size: 1.9rem; }
   .btn-large { padding: 14px 44px; }
@@ -897,5 +891,5 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
 /* 動きを減らす設定にしている人には、装飾アニメーションを止める */
 @media (prefers-reduced-motion: reduce) {
   .bubbles span, .new-record, .result-offer, .countdown-num, .title-character,
-  .hud-combo.boosted .hud-value, .panel, .overlay { animation: none; }
+  .hud-combo.boosted .hud-value, .panel, .overlay, .start-cue-figure { animation: none; }
 }
