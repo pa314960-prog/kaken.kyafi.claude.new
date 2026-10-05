@@ -58,8 +58,14 @@
 </div>
 
 <!-- ============================================================
-     カメラ映像(左下の小窓)
+     画面左：スコアランキング(タイトル画面だけ) とカメラ映像の小窓
      ============================================================ -->
+<div class="left-stack">
+<aside class="title-ranking" aria-label="スコアランキング">
+  <h2 class="title-ranking-head">スコアランキング</h2>
+  <!-- 今の難易度の上位5件。main.js の refreshTitleBest が書き込む -->
+  <ol class="title-ranking-list" id="title-ranking-list"></ol>
+</aside>
 <aside class="camera-dock">
   <div class="dock-label">POSE TRACKING</div>
   <div class="video-wrap">
@@ -69,6 +75,7 @@
   </div>
   <p id="status" class="status">カメラを準備しています…</p>
 </aside>
+</div>
 
 <!-- ============================================================
      操作ボタン(画面上部)
@@ -130,9 +137,12 @@
 
     <!-- 体験会でひと目でわかるよう、スタートの仕方だけを大きく出す -->
     <div class="start-cue">
-      <svg class="start-cue-figure" viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="15" r="7" />
-        <path d="M32 23 V44 M32 44 L24 60 M32 44 L40 60 M32 28 L18 8 M32 28 L46 8" />
+      <!-- 両手を挙げた人（手の先の線は「やった！」の動き） -->
+      <svg class="start-cue-figure" viewBox="0 0 80 80" aria-hidden="true">
+        <path class="rays" d="M10 10 L15 17 M4 22 L12 24 M70 10 L65 17 M76 22 L68 24" />
+        <path class="arms" d="M34 45 L20 16 M46 45 L60 16" />
+        <circle cx="40" cy="30" r="8" />
+        <path class="body" d="M30 44 Q30 40 34 40 H46 Q50 40 50 44 L48 76 H32 Z" />
       </svg>
       <p class="start-cue-text"><b>両手を挙げて</b>スタート！</p>
     </div>

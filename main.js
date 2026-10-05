@@ -362,6 +362,29 @@ function difficultyLabel(key) {
 function refreshTitleBest() {
   $("title-difficulty").textContent = difficultyLabel(settings.difficulty);
   $("title-best").textContent = bestFor(settings.difficulty);
+  refreshTitleRanking();
+}
+
+/* タイトル画面左のスコアランキング（今の難易度の上位5件。足りない分は「---」） */
+function refreshTitleRanking() {
+  const list = $("title-ranking-list");
+  const scores = rankingFor(settings.difficulty);
+  list.innerHTML = "";
+  for (let i = 0; i < CONFIG.RANKING_MAX; i++) {
+    const li = document.createElement("li");
+    const rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(i + 1);
+    const place = document.createElement("span");
+    place.className = "place";
+    place.textContent = `${i + 1}位`;
+    const score = document.createElement("span");
+    score.className = "score";
+    if (i < scores.length) score.textContent = String(scores[i]);
+    else { score.textContent = "---"; li.classList.add("empty"); }
+    li.append(rank, place, score);
+    list.appendChild(li);
+  }
 }
 
 /* 1つ上の難易度（なければ null） */
