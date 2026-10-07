@@ -73,8 +73,10 @@ window.Game = (function () {
     itemJitter: 2.0,          // 出現間隔のばらつき（秒）
     itemHalfWidth: 1.10,      // 取得判定の半幅（ワールド単位）
     heartChance: 0.28,        // ライフ回復アイテムが出る割合
-    shrimpImage: 'assets/items/shrimp.webp',
+    shrimpImage: 'assets/items/shrimp-red.png',
     shrimpWidth: 2.0,         // エビの表示幅（ワールド単位）
+    heartImage: 'assets/items/heart-red.png',
+    heartWidth: 1.1,          // 透過余白を含むハート画像の表示幅
 
     /* --- スコア --- */
     scorePerSecond: 10,
@@ -173,6 +175,11 @@ window.Game = (function () {
   var shrimpImg = { img: new Image(), ready: false };
   shrimpImg.img.onload = function () { shrimpImg.ready = true; };
   shrimpImg.img.src = CONFIG.shrimpImage;
+
+  /* ライフ回復アイテム（ハート）の画像 */
+  var heartImg = { img: new Image(), ready: false };
+  heartImg.img.onload = function () { heartImg.ready = true; };
+  heartImg.img.src = CONFIG.heartImage;
 
   /* 背景写真（1枚ずつ読み込み、読めたものだけ使う） */
   var bgImages = CONFIG.backgrounds.map(function (b) {
@@ -879,18 +886,19 @@ window.Game = (function () {
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(0, 0, 0.85, 0, Math.PI * 2); ctx.fill();
 
-      if (it.kind === 'heart') drawHeartIcon();
-      else if (shrimpImg.ready) drawShrimpImage();
+      if (it.kind === 'heart') {
+        if (heartImg.ready) drawItemImage(heartImg.img, CONFIG.heartWidth);
+        else drawHeartIcon();
+      }
+      else if (shrimpImg.ready) drawItemImage(shrimpImg.img, CONFIG.shrimpWidth);
       else drawShellIcon();
       ctx.restore();
     }
     ctx.globalAlpha = 1;
   }
 
-  /* エビの画像（1ワールド単位 = 1 の座標で、中心に描く） */
-  function drawShrimpImage() {
-    var img = shrimpImg.img;
-    var w = CONFIG.shrimpWidth;
+  /* アイテム画像は透過を保ち、縦横比を変えずに中心へ描く */
+  function drawItemImage(img, w) {
     var h = w * img.naturalHeight / img.naturalWidth;
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
   }

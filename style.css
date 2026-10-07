@@ -407,8 +407,8 @@ body[data-screen="title"] .title-ranking { display: block; }
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
-  gap: 6px;
-  padding: 5px;
+  gap: clamp(8px, .6vw, 12px);
+  padding: 8px;
   border: 1px solid var(--glass-line);
   border-radius: 999px;
   background: rgba(4, 24, 38, .62);
@@ -445,6 +445,14 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   font-size: .76rem;
   padding: 7px 14px;
   box-shadow: none;
+}
+
+/* 操作バーは離れた位置からも読める大きさにする */
+.controls .btn-sm {
+  min-height: clamp(56px, 4vw, 72px);
+  padding: 12px clamp(20px, 1.4vw, 28px);
+  font-size: clamp(1rem, 1.3vw, 1.4rem);
+  line-height: 1.3;
 }
 
 .btn-primary {
@@ -566,6 +574,7 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
   animation: fade-in .35s ease-out;
 }
 .overlay[hidden] { display: none; }
+#overlay-title { padding-top: clamp(110px, 14vh, 130px); }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* 湖がよく見えるように薄くする画面 */
@@ -931,7 +940,7 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
    ------------------------------------------------------------ */
 @media (max-width: 760px) {
   .controls { gap: 4px; padding: 4px; max-width: calc(100vw - 24px); }
-  .btn-sm { font-size: .7rem; padding: 7px 10px; }
+  .controls .btn-sm { font-size: .7rem; min-height: 36px; padding: 7px 10px; }
   .lbl-long { display: none; }
   body[data-screen="play"] .controls { top: 78px; }
 
@@ -951,6 +960,7 @@ body[data-screen="play"] .controls { top: clamp(84px, 12vh, 104px); }
 
   /* 画面下のカメラ小窓に内容が隠れないよう、下にも余白を取る */
   .overlay { padding: 64px 14px 150px; place-items: start center; }
+  #overlay-title { padding-top: 64px; }
   .overlay-clear { place-items: center; padding-bottom: 24px; }
   .panel { padding: 20px 16px; border-radius: 18px; }
   .overlay-inner { gap: 14px; }
