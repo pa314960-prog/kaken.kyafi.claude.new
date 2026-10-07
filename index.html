@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261007">
+<link rel="stylesheet" href="style.css?v=20261007-design">
 </head>
 <body>
 
@@ -42,7 +42,7 @@
   </div>
   <div class="hud-item hud-time">
     <span class="hud-label">TIME</span>
-    <span class="hud-value"><span id="hud-time">90</span><span class="hud-unit">s</span></span>
+    <span class="hud-value"><span id="hud-time">60</span><span class="hud-unit">s</span></span>
   </div>
   <div class="hud-group">
     <div class="hud-item">
@@ -131,7 +131,6 @@
       <h1 class="title">
         <span class="title-kicker">キャッフィーの</span>
         <span class="jp">琵琶湖サバイバル</span>
-        <span class="en">Biwako Survival</span>
       </h1>
     </div>
 
@@ -154,6 +153,35 @@
       </p>
     </div>
   </div>
+  <aside class="howto-card" aria-labelledby="howto-title">
+    <h2 id="howto-title">あそびかた</h2>
+    <ul class="howto-list">
+      <li>
+        <svg class="howto-icon" viewBox="0 0 80 80" aria-hidden="true">
+          <path fill="currentColor" d="M4 40 22 22v11h36V22l18 18-18 18V47H22v11Z"/>
+        </svg>
+        <p>体を<b>左右に動かして</b><br>障害物をよけよう</p>
+      </li>
+      <li>
+        <svg class="howto-icon howto-obstacles" viewBox="0 0 80 80" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="23" cy="24" rx="17" ry="12" transform="rotate(-30 23 24)"/>
+            <path d="m12 16 11 23m-3-28 10 25m-22-9 29-7M10 33l27-8m-5 10 16 26m-3 2 6-3M65 12v29c0 7-12 6-12 17 0 12 19 12 19 0V43l-7 7"/>
+          </g>
+        </svg>
+        <p><b>網</b>や<b>釣り針</b>に当たると<br><b>ライフ</b>が減る！</p>
+      </li>
+      <li>
+        <img class="howto-icon" src="assets/items/shrimp-red.png" alt="" aria-hidden="true">
+        <p>エビで<b>スコアUP！</b></p>
+      </li>
+      <li>
+        <img class="howto-icon" src="assets/items/heart-red.png" alt="" aria-hidden="true">
+        <p>ハートで<b>ライフ回復！</b></p>
+      </li>
+    </ul>
+    <p class="howto-footer">制限時間は60秒<br>ライフがなくなるとゲーム終了</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -243,8 +271,8 @@
   </div>
 </div>
 
-<script src="game.js?v=20261007"></script>
+<script src="game.js?v=20261007-design"></script>
 <script src="sound.js"></script>
-<script type="module" src="main.js"></script>
+<script type="module" src="main.js?v=20261007-design"></script>
 </body>
 </html>

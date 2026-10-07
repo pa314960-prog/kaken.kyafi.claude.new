@@ -95,7 +95,7 @@ let html = await readFile(path.join(ROOT, "index.html"), "utf8");
 html = replaceOnce(html, /[ \t]*<link[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>\r?\n/g, "", "Google Fonts の読み込み");
 html = replaceOnce(
   html,
-  /<script type="module" src="main\.js"><\/script>/,
+  /<script type="module" src="main\.js(?:\?[^"]*)?"><\/script>/,
   [
     '<!-- オフライン版: MediaPipe を同梱の lib/ から読み込む（tools/build-offline.mjs で生成） -->',
     '<script src="lib/vision_bundle.js"></script>',

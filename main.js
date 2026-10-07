@@ -290,8 +290,8 @@ function drawOverlay() {
 
   const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
   if (!vw || !vh) return;
-  // video は object-fit: cover なので、はみ出した分を考慮して座標を合わせる
-  const scale = Math.max(cw / vw, ch / vh);
+  // video の object-fit: contain と同じ倍率・余白で骨格を重ねる
+  const scale = Math.min(cw / vw, ch / vh);
   const dw = vw * scale, dh = vh * scale;
   const ox = (cw - dw) / 2, oy = (ch - dh) / 2;
   const toPx = (lm) => ({ x: ox + lm.x * dw, y: oy + lm.y * dh });

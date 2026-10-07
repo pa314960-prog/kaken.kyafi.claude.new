@@ -74,9 +74,9 @@ window.Game = (function () {
     itemHalfWidth: 1.10,      // 取得判定の半幅（ワールド単位）
     heartChance: 0.28,        // ライフ回復アイテムが出る割合
     shrimpImage: 'assets/items/shrimp-red.png',
-    shrimpWidth: 2.0,         // エビの表示幅（ワールド単位）
+    shrimpWidth: 2.6,         // エビの表示幅（ワールド単位）
     heartImage: 'assets/items/heart-red.png',
-    heartWidth: 1.1,          // 透過余白を含むハート画像の表示幅
+    heartWidth: 1.43,         // 透過余白を含むハート画像の表示幅
 
     /* --- スコア --- */
     scorePerSecond: 10,
@@ -93,9 +93,9 @@ window.Game = (function () {
 
   /* 難易度プリセット */
   var DIFFICULTY = {
-    easy:   { label: 'やさしい',   lives: 5, speed: 26, spawnStart: 1.9,  spawnMin: 1.05, ramp: 70, timeLimit: 90, hitScale: 0.85 },
-    normal: { label: 'ふつう',     lives: 3, speed: 34, spawnStart: 1.5,  spawnMin: 0.70, ramp: 60, timeLimit: 90, hitScale: 1.00 },
-    hard:   { label: 'むずかしい', lives: 2, speed: 46, spawnStart: 1.15, spawnMin: 0.48, ramp: 45, timeLimit: 90, hitScale: 1.10 },
+    easy:   { label: 'やさしい',   lives: 5, speed: 26, spawnStart: 1.9,  spawnMin: 1.05, ramp: 70, timeLimit: 60, hitScale: 0.85 },
+    normal: { label: 'ふつう',     lives: 3, speed: 34, spawnStart: 1.5,  spawnMin: 0.70, ramp: 60, timeLimit: 60, hitScale: 1.00 },
+    hard:   { label: 'むずかしい', lives: 2, speed: 46, spawnStart: 1.15, spawnMin: 0.48, ramp: 45, timeLimit: 60, hitScale: 1.10 },
   };
 
   var OBSTACLE_KINDS = ['net', 'hook', 'bottle'];
