@@ -365,8 +365,6 @@ function difficultyLabel(key) {
   return (Game.DIFFICULTY[key] || Game.DIFFICULTY.normal).label;
 }
 function refreshTitleBest() {
-  $("title-difficulty").textContent = difficultyLabel(settings.difficulty);
-  $("title-best").textContent = bestFor(settings.difficulty);
   refreshTitleRanking();
 }
 

@@ -794,12 +794,15 @@ body[data-screen="title"] .controls { display: none; }
 .title-cta { display: grid; justify-items: center; gap: 8px; margin-top: 4px; }
 #btn-play[hidden] { display: none; }
 
-.best-line {
+.title-time-limit {
   margin: 0;
-  font-size: .8rem;
-  color: var(--muted);
+  padding: 12px 0 4px;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 900;
+  color: var(--foam);
 }
-.best-line span[id$="best"], .result-best span[id$="best"] {
+.title-time-limit strong { color: var(--sun); font-size: 1.25em; margin-left: .15em; }
+.result-best span[id$="best"] {
   margin-left: .3em;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
