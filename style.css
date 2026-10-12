@@ -808,6 +808,9 @@ body[data-screen="title"] .controls { display: none; }
   font-weight: 900;
   color: var(--foam);
 }
+@media (min-width: 1320px) {
+  #overlay-title { padding-top: clamp(64px, 10vh, 100px); }
+}
 .result-best span[id$="best"] {
   margin-left: .3em;
   font-family: var(--font-num);
