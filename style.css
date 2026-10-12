@@ -802,6 +802,12 @@ body[data-screen="title"] .controls { display: none; }
   color: var(--foam);
 }
 .title-time-limit strong { color: var(--sun); font-size: 1.25em; margin-left: .15em; }
+.title-life-rule {
+  margin: 0;
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-weight: 900;
+  color: var(--foam);
+}
 .result-best span[id$="best"] {
   margin-left: .3em;
   font-family: var(--font-num);
