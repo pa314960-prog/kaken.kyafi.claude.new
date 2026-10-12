@@ -1056,3 +1056,56 @@ body[data-screen="title"] .controls { display: none; }
   .bubbles span, .new-record, .result-offer, .countdown-num, .title-character,
   .hud-combo.boosted .hud-value, .panel, .overlay, .start-cue-figure { animation: none; }
 }
+/* Settings: bright theme */
+:root[data-theme="light"] {
+  --lake-deep: #d5f1f8;
+  --lake: #238bb4;
+  --lake-bright: #087fa9;
+  --foam: #204e65;
+  --sun: #b97412;
+  --sun-bright: #9e620c;
+  --sun-deep: #b57a1c;
+  --teal: #149ab9;
+  --text: #204e65;
+  --muted: #5c8092;
+  --dock-bg: rgba(248, 254, 255, .94);
+  --dock-line: rgba(40, 153, 185, .30);
+  --glass: linear-gradient(160deg, rgba(255,255,255,.96), rgba(229,248,253,.94));
+  --glass-line: rgba(255,255,255,.90);
+  --glass-hi: rgba(255,255,255,.8);
+  --shadow-lg: 0 18px 42px rgba(21,92,118,.19), inset 0 1px 0 white;
+}
+:root[data-theme="light"] .vignette { background: radial-gradient(ellipse at center, transparent 25%, rgba(213,244,253,.24) 100%); }
+:root[data-theme="light"] .overlay { background: linear-gradient(180deg, rgba(220,247,255,.23), rgba(201,240,250,.35)); }
+:root[data-theme="light"] body[data-screen="title"] #game-canvas { filter: brightness(1.25) saturate(.90); }
+:root[data-theme="light"] :is(.panel, .title-ranking, .howto-card, .camera-dock, .settings-dock) { box-shadow: var(--shadow-lg); }
+:root[data-theme="light"] .title-kicker { color: #187fa6; opacity: 1; text-shadow: 0 2px 0 #fff; }
+:root[data-theme="light"] .title .jp { background: linear-gradient(180deg, #2ea9cc, #08739e); background-clip: text; -webkit-background-clip: text; text-shadow: 0 4px 12px rgba(18,137,176,.12); }
+:root[data-theme="light"] :is(.section-label, .hud-label) { color: #498299; }
+:root[data-theme="light"] :is(.title-ranking-list, .howto-list) { background: rgba(218,241,248,.65); }
+:root[data-theme="light"] :is(.title-ranking-list li + li, .howto-list li + li) { border-color: rgba(60,140,165,.17); }
+:root[data-theme="light"] .title-ranking-list .rank { color: #35738a; border-color: rgba(49,139,170,.25); }
+:root[data-theme="light"] .title-ranking-list li:nth-child(1) .rank { background: #ffe19b; color: #8e5c0c; }
+:root[data-theme="light"] .title-ranking-list li:nth-child(2) .rank { background: #dfeaf1; color: #4a6575; }
+:root[data-theme="light"] .title-ranking-list li:nth-child(3) .rank { background: #f7dcc4; color: #986535; }
+:root[data-theme="light"] .dock-label { color: #1685a7; }
+:root[data-theme="light"] .video-wrap { background: linear-gradient(140deg, #c1e9f4, #e4f7fb); }
+:root[data-theme="light"] .start-cue { background: linear-gradient(180deg, #fff6d8, #ffedbc); border-color: #efd292; box-shadow: inset 0 1px 0 #fff; }
+:root[data-theme="light"] .btn-primary { box-shadow: 0 8px 22px rgba(210,150,36,.23), inset 0 2px 0 rgba(255,255,255,.7); }
+:root[data-theme="light"] .howto-list b { color: #ad6c0b; }
+:root[data-theme="light"] .howto-footer { color: #587c90; }
+:root[data-theme="light"] .retry-button-help { background: #dff2f8; color: #426b7f; }
+:root[data-theme="light"] .title .jp { filter: drop-shadow(0 3px 3px rgba(21,130,165,.12)); }
+:root[data-theme="light"] .settings-dock summary { color: #267c99; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="light"] :is(.controls, .character-credit) { background: rgba(241,252,255,.94); box-shadow: var(--shadow-lg); }
+:root[data-theme="light"] .btn:not(.btn-primary) { background: linear-gradient(180deg, #f3fcff, #ccecf5); color: #204e65; box-shadow: 0 4px 14px rgba(21,92,118,.16); }
+:root[data-theme="light"] .btn:disabled { opacity: .5; }
+:root[data-theme="light"] .settings select { background: #f3fcff; border-color: #abd7e5; color: #204e65; }
+:root[data-theme="light"] .hud { background: linear-gradient(180deg, rgba(219,246,255,.6), transparent); }
+:root[data-theme="light"] .hud-item { box-shadow: 0 8px 24px rgba(21,92,118,.18); }
+:root[data-theme="light"] .hud-value { text-shadow: none; }
+:root[data-theme="light"] .hud-combo.boosted .hud-value { color: #b97412; }
+:root[data-theme="light"] .screen-title { text-shadow: none; }
+:root[data-theme="light"] .calib-track { stroke: #c1e2ec; }
+:root[data-theme="light"] .pip.lost { background: #71929e; opacity: .55; }

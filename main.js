@@ -85,11 +85,12 @@ const setSensitivity = $("set-sensitivity");
 const setSmoothing = $("set-smoothing");
 const setMirror = $("set-mirror");
 const setDifficulty = $("set-difficulty");
+const setTheme = $("set-theme");
 
 /* ------------------------------------------------------------
    設定（localStorage に保存）
    ------------------------------------------------------------ */
-const defaultSettings = { sensitivity: 1.5, smoothing: 7, mirror: true, difficulty: "normal" };
+const defaultSettings = { sensitivity: 1.5, smoothing: 7, mirror: true, difficulty: "normal", theme: "dark" };
 let settings = Object.assign({}, defaultSettings);
 
 function loadSettings() {
@@ -561,6 +562,7 @@ setDifficulty.addEventListener("change", () => selectDifficulty(setDifficulty.va
 
 /* 設定 */
 function applySettingsToUI() {
+  applyTheme();
   setSensitivity.value = settings.sensitivity;
   setSmoothing.value = settings.smoothing;
   setMirror.checked = settings.mirror;
@@ -570,6 +572,16 @@ function applySettingsToUI() {
   overlayCanvas.classList.toggle("mirrored", settings.mirror);
   setDifficulty.value = settings.difficulty;
 }
+function applyTheme() {
+  settings.theme = settings.theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = settings.theme;
+  setTheme.value = settings.theme;
+}
+setTheme.addEventListener("change", () => {
+  settings.theme = setTheme.value;
+  applyTheme();
+  saveSettings();
+});
 setSensitivity.addEventListener("input", () => {
   settings.sensitivity = parseFloat(setSensitivity.value);
   $("set-sensitivity-value").textContent = settings.sensitivity.toFixed(1);
@@ -594,6 +606,7 @@ setMirror.addEventListener("change", () => {
 
 /* キーボード（カメラが使えないときのフォールバック） */
 window.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, select, textarea")) return;
   if (e.key === "ArrowLeft") { keyLeft = true; keyboardActive = CONFIG.KEYBOARD_TAKEOVER_SECONDS; e.preventDefault(); }
   else if (e.key === "ArrowRight") { keyRight = true; keyboardActive = CONFIG.KEYBOARD_TAKEOVER_SECONDS; e.preventDefault(); }
   else if (e.key === " " || e.key === "Enter") {
