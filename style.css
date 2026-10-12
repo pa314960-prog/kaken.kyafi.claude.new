@@ -432,6 +432,7 @@ body[data-screen="title"] .title-ranking { display: block; }
 }
 /* プレイ中はスコア表示の下へ移す */
 body[data-screen="play"] .controls { top: clamp(120px, 16vh, 148px); }
+body[data-screen="title"] .controls { display: none; }
 
 .btn {
   font-family: inherit;
