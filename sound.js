@@ -16,15 +16,7 @@ window.Sound = (function () {
   var master = null;
   var ambientGain = null;
   var ambientSource = null;
-  var enabled = true;
   var ready = false;
-
-  var STORAGE_KEY = 'biwako_survival_sound_v1';
-
-  try {
-    var saved = localStorage.getItem(STORAGE_KEY);
-    if (saved !== null) enabled = saved === 'on';
-  } catch (e) { /* localStorage が使えなくても音は鳴らせる */ }
 
   /* ----------------------------------------------------------
      初期化（最初のユーザー操作のときに呼ぶ）
@@ -39,7 +31,7 @@ window.Sound = (function () {
     try {
       ctx = new AC();
       master = ctx.createGain();
-      master.gain.value = enabled ? 0.9 : 0;
+      master.gain.value = 0.9;
       master.connect(ctx.destination);
       buildAmbient();
       ready = true;
@@ -103,7 +95,7 @@ window.Sound = (function () {
      音を作る道具
      ---------------------------------------------------------- */
   function tone(opts) {
-    if (!ready || !enabled) return;
+    if (!ready) return;
     var t0 = ctx.currentTime + (opts.delay || 0);
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
@@ -123,7 +115,7 @@ window.Sound = (function () {
   }
 
   function noiseBurst(opts) {
-    if (!ready || !enabled) return;
+    if (!ready) return;
     var t0 = ctx.currentTime + (opts.delay || 0);
     var dur = opts.dur || 0.3;
     var len = Math.max(1, Math.floor(ctx.sampleRate * dur));
@@ -156,20 +148,6 @@ window.Sound = (function () {
      ---------------------------------------------------------- */
   var api = {
     unlock: unlock,
-
-    isEnabled: function () { return enabled; },
-
-    setEnabled: function (v) {
-      enabled = !!v;
-      try { localStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off'); } catch (e) {}
-      if (ready && master) {
-        var t = ctx.currentTime;
-        master.gain.cancelScheduledValues(t);
-        master.gain.setValueAtTime(master.gain.value, t);
-        master.gain.linearRampToValueAtTime(enabled ? 0.9 : 0, t + 0.15);
-      }
-      return enabled;
-    },
 
     /* ボタンのクリック */
     click: function () {

@@ -71,7 +71,6 @@ const screens = {
 const btnStart = $("btn-start");
 const btnStop = $("btn-stop");
 const btnRecalib = $("btn-recalib");
-const btnSound = $("btn-sound");
 const btnPlay = $("btn-play");
 const btnCalibCancel = $("btn-calib-cancel");
 const btnRetry = $("btn-retry");
@@ -536,14 +535,6 @@ $("btn-keyboard").addEventListener("click", () => {
   enterState(S.TITLE);
 });
 
-btnSound.addEventListener("click", () => {
-  Sound.unlock();
-  const on = Sound.setEnabled(!Sound.isEnabled());
-  btnSound.textContent = on ? "♪ 音 ON" : "♪ 音 OFF";
-  btnSound.setAttribute("aria-pressed", String(on));
-  if (on) Sound.click();
-});
-
 /* 難易度（画面には出さない裏設定。設定パネルか、タイトル画面の 1・2・3 キーで変える）
    体験会で誤って変わらないよう、カメラの動きでは変えられないようにしている */
 const DIFF_ORDER = ["easy", "normal", "hard"];
@@ -837,9 +828,6 @@ async function main() {
   loadSettings();
   runDifficulty = settings.difficulty;
   applySettingsToUI();
-
-  btnSound.textContent = Sound.isEnabled() ? "♪ 音 ON" : "♪ 音 OFF";
-  btnSound.setAttribute("aria-pressed", String(Sound.isEnabled()));
 
   Game.init($("game-canvas"));
   Game.setDifficulty(settings.difficulty);
