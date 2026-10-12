@@ -117,9 +117,8 @@ body {
 .character-credit {
   display: block;
   position: fixed;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: clamp(12px, 2vh, 20px);
+  left: clamp(12px, 2vw, 26px);
   max-width: calc(100vw - 24px);
   text-align: center;
   z-index: 7;
@@ -135,7 +134,6 @@ body {
   color: var(--foam);
   pointer-events: none;
 }
-body[data-screen="title"] .character-credit { display: none; }
 
 /* ------------------------------------------------------------
    プレイ中のスコア表示
@@ -668,12 +666,6 @@ body[data-screen="title"] .controls { display: none; }
   display: grid;
   justify-items: center;
   gap: 4px;
-}
-.title-character-credit {
-  margin: 0 0 4px;
-  font-size: clamp(.65rem, .85vw, .8rem);
-  line-height: 1.4;
-  color: var(--foam);
 }
 /* キャラクター画像：加工はせず、上下のゆれ(平行移動)だけ */
 .title-character {
