@@ -408,10 +408,8 @@ function setupResultActions(reason) {
   }
   btnRetry.hidden = resultMode === "done";
   $("retry-gesture").hidden = resultMode === "done";
-  $("retry-button-help").hidden = resultMode === "done";
   $("retry-guide-title").textContent = resultMode === "offer" ? "次の難易度に挑戦" : resultMode === "done" ? "遊んでくれてありがとう！" : "もう一度遊ぶには";
   $("retry-primary").innerHTML = resultMode === "done" ? "少し待つと<br>ホーム画面に戻ります" : resultMode === "offer" ? "<b>両手を挙げて</b><br>次の難易度に挑戦！" : "<b>両手を挙げて</b><br>もう一度スタート！";
-  $("retry-button-help").innerHTML = resultMode === "offer" ? "ボタンでも挑戦できます<br><b>「" + btnRetry.textContent + "」</b>を押してください" : "ボタンでも遊べます<br><b>「もう一度」</b>を押してください";
   updateResultAuto();
 }
 
@@ -422,10 +420,10 @@ function updateResultAuto() {
   const remain = Math.max(0, Math.ceil(total - stateTimer));
   if (remain === lastResultAutoShown) return;
   lastResultAutoShown = remain;
-  // 画面が低いと下の案内が隠れるので、大事な操作はこの行（タイトルのすぐ下）にも書く
+  // 再開の案内と分けて、待機中の残り秒数を表示
   $("result-auto").textContent =
     resultMode === "offer" ? `何もしなければ ${remain} 秒後に終わります`
-    : resultMode === "retry" ? `両手を挙げるともう一度。何もしなければ ${remain} 秒後にタイトルへ`
+    : resultMode === "retry" ? `何もしなければ ${remain} 秒後にタイトルへ`
     : `${remain} 秒後にタイトルに戻ります`;
 }
 

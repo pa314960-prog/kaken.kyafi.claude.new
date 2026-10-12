@@ -606,9 +606,9 @@ body[data-screen="title"] .controls { display: none; }
 .retry-guide { align-self: center; }
 .retry-gesture { color: var(--sun); margin: 20px auto 12px; }
 .retry-gesture svg { width: 96px; height: 110px; }
-.retry-primary { margin: 10px 0 22px; font-size: clamp(1.25rem, 1.8vw, 1.8rem); font-weight: 900; line-height: 1.7; }
-.retry-primary b, .retry-button-help b { color: var(--sun); }
-.retry-button-help { padding: 18px 10px; border-radius: 14px; background: rgba(2,16,26,.4); font-size: 1rem; line-height: 1.8; }
+.retry-primary { margin: 10px 0 22px; font-size: clamp(1.6rem, 2.3vw, 2.2rem); font-weight: 900; line-height: 1.6; }
+.retry-primary b { color: var(--sun); }
+.retry-primary b { display: inline-block; font-size: 1.2em; }
 .retry-guide .result-auto { margin: 20px 0 0; font-size: .85rem; line-height: 1.8; }
 @media (max-width: 1319px) {
   #overlay-result { grid-template-columns: minmax(0, 1fr); row-gap: 20px; padding-bottom: 230px; }
@@ -1109,7 +1109,6 @@ body[data-screen="title"] .controls { display: none; }
 :root[data-theme="light"] .btn-primary { box-shadow: 0 8px 22px rgba(210,150,36,.23), inset 0 2px 0 rgba(255,255,255,.7); }
 :root[data-theme="light"] .howto-list b { color: #ad6c0b; }
 :root[data-theme="light"] .howto-footer { color: #587c90; }
-:root[data-theme="light"] .retry-button-help { background: #dff2f8; color: #426b7f; }
 :root[data-theme="light"] .title .jp { filter: drop-shadow(0 3px 3px rgba(21,130,165,.12)); }
 :root[data-theme="light"] .settings-dock summary { color: #267c99; }
 :root[data-theme="light"] { color-scheme: light; }
