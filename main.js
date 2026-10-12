@@ -422,8 +422,8 @@ function updateResultAuto() {
   lastResultAutoShown = remain;
   // 再開の案内と分けて、待機中の残り秒数を表示
   $("result-auto").textContent =
-    resultMode === "offer" ? `何もしなければ ${remain} 秒後に終わります`
-    : resultMode === "retry" ? `何もしなければ ${remain} 秒後にタイトルへ`
+    resultMode === "offer" ? `何もしなければ\n${remain}秒後に終わります`
+    : resultMode === "retry" ? `何もしなければ\n${remain}秒後にタイトルへ`
     : `${remain} 秒後にタイトルに戻ります`;
 }
 

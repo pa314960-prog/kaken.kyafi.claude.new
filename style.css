@@ -609,7 +609,7 @@ body[data-screen="title"] .controls { display: none; }
 .retry-primary { margin: 10px 0 22px; font-size: clamp(1.6rem, 2.3vw, 2.2rem); font-weight: 900; line-height: 1.6; }
 .retry-primary b { color: var(--sun); }
 .retry-primary b { display: inline-block; font-size: 1.2em; }
-.retry-guide .result-auto { margin: 20px 0 0; font-size: clamp(1.15rem, 1.6vw, 1.5rem); font-weight: 900; line-height: 1.65; color: var(--foam); }
+.retry-guide .result-auto { margin: 20px 0 0; font-size: clamp(1.15rem, 1.6vw, 1.5rem); font-weight: 900; line-height: 1.65; color: var(--foam); white-space: pre-line; }
 @media (max-width: 1319px) {
   #overlay-result { grid-template-columns: minmax(0, 1fr); row-gap: 20px; padding-bottom: 230px; }
   #overlay-result > .panel-result, #overlay-result > .retry-guide { grid-column: 1; }
