@@ -231,6 +231,17 @@ body[data-screen="play"] .character-credit { display: block; }
   transform: scale(.78);
 }
 
+/* ハートを拡大してから、ジグザグに割った左右を落とす */
+.heart-break { position: fixed; z-index: 40; pointer-events: none; transform-origin: center; animation: heart-break-pop .75s ease-out both; }
+.heart-break-half { position: absolute; inset: 0; transform-origin: 50% 70%; }
+.heart-break-half .pip { display: block; width: 100%; height: 100%; opacity: 1; transform: none; background: linear-gradient(180deg,#ffe0e8,#ff547c); }
+.heart-break-left { clip-path: polygon(0 0,53% 0,44% 25%,55% 43%,44% 63%,53% 80%,48% 100%,0 100%); animation: heart-split-left .75s ease-in both; }
+.heart-break-right { clip-path: polygon(53% 0,100% 0,100% 100%,48% 100%,53% 80%,44% 63%,55% 43%,44% 25%); animation: heart-split-right .75s ease-in both; }
+@keyframes heart-break-pop { 0% {transform:scale(1);opacity:1} 18% {transform:scale(1.6);opacity:1} 35% {transform:scale(1.4);opacity:1} 80% {opacity:1} 100% {transform:scale(1.1);opacity:0} }
+@keyframes heart-split-left { 0%,20% {transform:translate(0,0) rotate(0)} 100% {transform:translate(-16px,30px) rotate(-32deg)} }
+@keyframes heart-split-right { 0%,20% {transform:translate(0,0) rotate(0)} 100% {transform:translate(16px,30px) rotate(32deg)} }
+@media (prefers-reduced-motion: reduce) { .heart-break {animation-duration:.2s} .heart-break-half {animation:none} }
+
 /* ------------------------------------------------------------
    カメラの小窓
    ------------------------------------------------------------ */
@@ -584,6 +595,22 @@ body[data-screen="play"] .controls { top: clamp(120px, 16vh, 148px); }
   column-gap: clamp(20px, 3vw, 52px);
 }
 #overlay-title > .panel-title { grid-column: 2; }
+#overlay-result {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 640px) minmax(0, 1fr);
+  column-gap: clamp(20px, 3vw, 52px);
+}
+#overlay-result > .panel-result { grid-column: 2; }
+.retry-guide { align-self: center; }
+.retry-gesture { color: var(--sun); margin: 20px auto 12px; }
+.retry-gesture svg { width: 96px; height: 110px; }
+.retry-primary { margin: 10px 0 22px; font-size: clamp(1.25rem, 1.8vw, 1.8rem); font-weight: 900; line-height: 1.7; }
+.retry-primary b, .retry-button-help b { color: var(--sun); }
+.retry-button-help { padding: 18px 10px; border-radius: 14px; background: rgba(2,16,26,.4); font-size: 1rem; line-height: 1.8; }
+.retry-guide .result-auto { margin: 20px 0 0; font-size: .85rem; line-height: 1.8; }
+@media (max-width: 1319px) {
+  #overlay-result { grid-template-columns: minmax(0, 1fr); row-gap: 20px; padding-bottom: 230px; }
+  #overlay-result > .panel-result, #overlay-result > .retry-guide { grid-column: 1; }
+}
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* 湖がよく見えるように薄くする画面 */

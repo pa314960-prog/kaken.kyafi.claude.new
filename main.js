@@ -194,6 +194,7 @@ function enterState(next) {
     refreshTitleBest();
     showScreen("title");
   } else if (next === S.CALIB) {
+    HitHeart.clear();
     // リトライでも、前回の被弾の粒・点滅・赤い画面効果を準備前に消す。
     Game.resetRun();
     calibSamplesX = [];
@@ -330,6 +331,7 @@ function drawOverlay() {
    HUD
    ------------------------------------------------------------ */
 function buildLifePips() {
+  HitHeart.clear();
   const st = Game.getStats();
   hudLives.innerHTML = "";
   for (let i = 0; i < st.maxLives; i++) {
@@ -418,6 +420,11 @@ function setupResultActions(reason) {
     $("result-hint").textContent = "遊んでくれてありがとう！";
   }
   btnRetry.hidden = resultMode === "done";
+  $("retry-gesture").hidden = resultMode === "done";
+  $("retry-button-help").hidden = resultMode === "done";
+  $("retry-guide-title").textContent = resultMode === "offer" ? "次の難易度に挑戦" : resultMode === "done" ? "遊んでくれてありがとう！" : "もう一度遊ぶには";
+  $("retry-primary").innerHTML = resultMode === "done" ? "少し待つと<br>ホーム画面に戻ります" : resultMode === "offer" ? "<b>両手を挙げて</b><br>次の難易度に挑戦！" : "<b>両手を挙げて</b><br>もう一度スタート！";
+  $("retry-button-help").innerHTML = resultMode === "offer" ? "ボタンでも挑戦できます<br><b>「" + btnRetry.textContent + "」</b>を押してください" : "ボタンでも遊べます<br><b>「もう一度」</b>を押してください";
   updateResultAuto();
 }
 
@@ -833,7 +840,10 @@ async function main() {
 
   Game.init($("game-canvas"));
   Game.setDifficulty(settings.difficulty);
-  Game.on("hit", () => Sound.hit());
+  Game.on("hit", (event) => {
+    Sound.hit();
+    HitHeart.play(hudLives.children[event.lives]);
+  });
   Game.on("dodge", () => Sound.dodge());
   Game.on("item", (e) => (e.kind === "heart" ? Sound.heal() : Sound.pickup()));
   Game.on("gameover", (e) => showResult(e.reason));

@@ -136,6 +136,7 @@ window.Game = (function () {
   var items = [];
   var particles = [];  // 画面座標で動く小さな粒（演出のみ）
   var floaters = [];   // 「+50」のように浮き上がる文字（演出のみ）
+  var waterHits = [];   // 被弾時の水しぶきと波紋
   var buoys = [];
   var waveScroll = 0;
   var clock = 0;        // 演出用の累積時間
@@ -277,6 +278,7 @@ window.Game = (function () {
     items = [];
     particles = [];
     floaters = [];
+    waterHits = [];
     elapsed = 0;
     lives = D.lives;
     dodged = 0;
@@ -329,11 +331,14 @@ window.Game = (function () {
 
     moveCharacter(dt);
 
+    if (invincible > 0) invincible = Math.max(0, invincible - dt);
+    if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - dt);
+    updateEffects(dt);
+    waterHits.forEach(function (hit) { hit.age += dt; });
+    waterHits = waterHits.filter(function (hit) { return hit.age < hit.life; });
     if (!playing) return;
 
     elapsed += dt;
-    if (invincible > 0) invincible = Math.max(0, invincible - dt);
-    if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - dt);
 
     // 障害物の出現
     spawnTimer -= dt;
@@ -363,9 +368,9 @@ window.Game = (function () {
           if (invincible <= 0) {
             lives -= 1;
             invincible = CONFIG.invincibleSeconds;
-            hitFlash = 0.3;
+            hitFlash = 0;
             combo = 0;                       // コンボは被弾で途切れる
-            burst(charX, CONFIG.playerZ, 18, '#ff6b6b');
+            waterSplash(charX, CONFIG.playerZ);
             emit('hit', { lives: lives, combo: combo });
           }
         } else if (ob.z <= CONFIG.despawnZ) {
@@ -412,7 +417,6 @@ window.Game = (function () {
 
     scoreAcc += CONFIG.scorePerSecond * dt;
     score = Math.floor(scoreAcc);
-    updateEffects(dt);
 
     if (lives <= 0) {
       playing = false;
@@ -537,6 +541,56 @@ window.Game = (function () {
       if (f.age >= f.life) { floaters.splice(i, 1); continue; }
       f.y -= 46 * dt;
     }
+  }
+
+  function waterSplash(x, z) {
+    var drops = [];
+    for (var i = 0; i < 28; i++) {
+      var side = i % 2 ? 1 : -1;
+      drops.push({
+        x: side * (0.65 + Math.random() * 0.75),
+        vx: side * (0.7 + Math.random() * 2.2),
+        vy: -(1.2 + Math.random() * 3.3),
+        r: 0.025 + Math.random() * 0.05,
+        life: 0.38 + Math.random() * 0.37
+      });
+    }
+    waterHits.push({ x: x, z: z, age: 0, life: 1.05, drops: drops });
+    if (waterHits.length > 4) waterHits.shift();
+  }
+
+  // 波紋はキャラクターの後ろ、水滴は手前に描く。
+  function drawWaterHits(front) {
+    base();
+    ctx.save();
+    waterHits.forEach(function (hit) {
+      var p = project(hit.x, hit.z), t = hit.age;
+      if (!front) {
+        for (var ring = 0; ring < 3; ring++) {
+          var age = t - ring * 0.10;
+          if (age < 0 || age > 0.85) continue;
+          var progress = age / 0.85;
+          var radius = (0.8 + 2.0 * (1 - Math.pow(1-progress, 2))) * p.s;
+          ctx.globalAlpha = Math.pow(1-progress, 1.5) * (ring === 0 ? 0.9 : 0.55);
+          ctx.strokeStyle = ring === 1 ? '#9eeaff' : '#f2fdff';
+          ctx.lineWidth = Math.max(1, (0.035 - progress * 0.02) * p.s);
+          ctx.beginPath(); ctx.ellipse(p.x, p.y - 0.015*p.s, radius, radius*0.20, 0, 0, Math.PI*2); ctx.stroke();
+        }
+      } else {
+        hit.drops.forEach(function (drop) {
+          if (t > drop.life) return;
+          var progress = t / drop.life;
+          var dx = p.x + (drop.x + drop.vx*t) * p.s;
+          var dy = p.y + (-0.10 + drop.vy*t + 4.5*t*t) * p.s;
+          var radius = Math.max(1, drop.r * p.s * (1-progress*0.35));
+          ctx.globalAlpha = Math.min(1, (1-progress)*2.5);
+          ctx.strokeStyle = '#b7f0ff'; ctx.lineWidth = radius * 1.3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(dx-drop.vx*p.s*0.018, dy-(drop.vy+9*t)*p.s*0.018);ctx.lineTo(dx,dy);ctx.stroke();
+          ctx.fillStyle = '#f5fdff';ctx.beginPath();ctx.arc(dx,dy,radius,0,Math.PI*2);ctx.fill();
+        });
+      }
+    });
+    ctx.restore();
   }
 
   /* ==========================================================
@@ -1220,11 +1274,12 @@ window.Game = (function () {
     ctx.fillStyle = g;
     ctx.fillRect(0, H * 0.66, W, H * 0.34);
 
+    drawWaterHits(false);
     if (opts.showCharacter !== false) drawCharacter();
+    drawWaterHits(true);
 
     base();
     drawEffects();
-    drawHitVignette();
   }
 
   /* ----------------------------------------------------------
