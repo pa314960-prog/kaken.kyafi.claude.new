@@ -310,6 +310,12 @@ window.Game = (function () {
      更新
      ---------------------------------------------------------- */
   function update(dt) {
+    // 小刻みに判定し、高速な障害物が輪郭を飛び越えるのを抑える。
+    var steps = Math.max(1, Math.ceil(dt / CONFIG.physicsStep));
+    for (var step = 0; step < steps; step++) updateStep(dt / steps);
+  }
+
+  function updateStep(dt) {
     clock += dt;
 
     var speed = playing ? D.speed : D.speed * 0.35; // 待機中はゆっくり流す
@@ -343,14 +349,17 @@ window.Game = (function () {
       itemTimer = CONFIG.itemInterval + (Math.random() - 0.5) * 2 * CONFIG.itemJitter;
     }
 
-    // 障害物を手前へ動かし、通過した瞬間に判定する
+    // 指定されたキャラクターの範囲と、障害物画像の不透明部分の接触を調べる。
     var hitHalf = CONFIG.hitHalfWidth * D.hitScale;
     for (var i = 0; i < obstacles.length; i++) {
       var ob = obstacles[i];
       ob.z -= speed * dt;
-      if (!ob.resolved && ob.z <= CONFIG.playerZ) {
-        ob.resolved = true;
-        if (Math.abs(ob.x - charX) < hitHalf) {
+      if (!ob.resolved) {
+        var touches = window.OutlineCollision.overlaps(characterSprite(), obstacleSprite(ob), dpr);
+        // 画像が読み込めない場合だけ従来の判定を使う。
+        if (touches === null) touches = ob.z <= CONFIG.playerZ && Math.abs(ob.x - charX) < hitHalf;
+        if (touches) {
+          ob.resolved = true;
           if (invincible <= 0) {
             lives -= 1;
             invincible = CONFIG.invincibleSeconds;
@@ -359,7 +368,8 @@ window.Game = (function () {
             burst(charX, CONFIG.playerZ, 18, '#ff6b6b');
             emit('hit', { lives: lives, combo: combo });
           }
-        } else {
+        } else if (ob.z <= CONFIG.despawnZ) {
+          ob.resolved = true;
           dodged += 1;
           combo += 1;
           if (combo > bestCombo) bestCombo = combo;
@@ -373,13 +383,15 @@ window.Game = (function () {
     }
     obstacles = obstacles.filter(function (o) { return o.z > CONFIG.despawnZ; });
 
-    // アイテムを手前へ動かし、通過した瞬間に取得判定する
+    // アイテムも透明な余白を除いた輪郭同士で取得判定する。
     for (var j = 0; j < items.length; j++) {
       var it = items[j];
       it.z -= speed * dt;
-      if (!it.resolved && it.z <= CONFIG.playerZ) {
+      var takes = !it.resolved && window.OutlineCollision.overlaps(characterSprite(), itemSprite(it), dpr);
+      if (takes === null) takes = it.z <= CONFIG.playerZ && Math.abs(it.x - charX) < CONFIG.itemHalfWidth;
+      if (!it.resolved && (takes || it.z <= CONFIG.despawnZ)) {
         it.resolved = true;
-        if (Math.abs(it.x - charX) < CONFIG.itemHalfWidth) {
+        if (takes) {
           it.taken = true;
           if (it.kind === 'heart') {
             if (lives < D.lives) lives += 1;
@@ -901,6 +913,38 @@ window.Game = (function () {
   function drawItemImage(img, w) {
     var h = w * img.naturalHeight / img.naturalWidth;
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  }
+
+  /* 描画と同じ座標・縦横比・揺れを使う。後光や水面の影は判定に含めない。 */
+  function characterSprite() {
+    if (!charImgReady || !charImg.naturalHeight) return null;
+    var p = project(charX, CONFIG.playerZ);
+    var h = CONFIG.characterWorldHeight * p.s;
+    var w = h * charImg.naturalWidth / charImg.naturalHeight;
+    var bob = Math.sin(clock * Math.PI * 2 * CONFIG.bobHz) * CONFIG.bobAmplitude * p.s;
+    return { img: window.OutlineCollision.markedRegion(charImg), x: p.x - w / 2, y: p.y + bob - h, w: w, h: h };
+  }
+
+  function obstacleSprite(ob) {
+    var art = OBSTACLE_IMAGES[ob.kind];
+    if (!art || !art.ready) return null;
+    var p = project(ob.x, ob.z);
+    var w = art.width * p.s;
+    var h = w * art.img.naturalHeight / art.img.naturalWidth;
+    return { img: art.img,
+      x: p.x + Math.sin(clock * 2.0 + ob.seed) * 0.06 * p.s - w / 2,
+      y: p.y - art.bottom * p.s - h + Math.sin(clock * 1.7 + ob.seed) * 0.05 * p.s,
+      w: w, h: h };
+  }
+
+  function itemSprite(it) {
+    var asset = it.kind === 'heart' ? heartImg : shrimpImg;
+    if (!asset.ready) return null;
+    var p = project(it.x, it.z);
+    var w = (it.kind === 'heart' ? CONFIG.heartWidth : CONFIG.shrimpWidth) * p.s;
+    var h = w * asset.img.naturalHeight / asset.img.naturalWidth;
+    var bob = Math.sin(clock * 2.4 + it.seed) * 0.12;
+    return { img: asset.img, x: p.x - w / 2, y: p.y - (1.0 + bob) * p.s - h / 2, w: w, h: h };
   }
 
   /* エビの画像が読み込めないときの代わりの図形（貝） */

@@ -81,7 +81,7 @@ await rm(OUT_BASE, { recursive: true, force: true });
 await mkdir(path.join(OUT, "lib"), { recursive: true });
 
 /* ゲーム本体（そのままコピー） */
-for (const f of ["game.js", "sound.js", "style.css", "README.md"]) {
+for (const f of ["game.js", "character-hit-region.js", "outline-collision.js", "sound.js", "style.css", "README.md"]) {
   await cp(path.join(ROOT, f), path.join(OUT, f));
 }
 await cp(path.join(ROOT, "assets"), path.join(OUT, "assets"), { recursive: true });
