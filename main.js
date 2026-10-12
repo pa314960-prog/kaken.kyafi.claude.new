@@ -194,6 +194,8 @@ function enterState(next) {
     refreshTitleBest();
     showScreen("title");
   } else if (next === S.CALIB) {
+    // リトライでも、前回の被弾の粒・点滅・赤い画面効果を準備前に消す。
+    Game.resetRun();
     calibSamplesX = [];
     calibSamplesW = [];
     calibBar.style.strokeDashoffset = "327";
