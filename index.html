@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261012-theme">
+<link rel="stylesheet" href="style.css?v=20261012-start-toggle">
 </head>
 <body>
 
@@ -92,6 +92,10 @@
 <details class="settings-dock">
   <summary>設定</summary>
   <div class="settings">
+    <label class="check">
+      <input type="checkbox" id="set-show-start-button" checked>
+      <span>ゲーム開始ボタンを表示（展示時はオフ）</span>
+    </label>
     <label>
       <span>画面の明るさ</span>
       <select id="set-theme">
@@ -290,6 +294,6 @@
 <script src="outline-collision.js?v=20261012-marked"></script>
 <script src="game.js?v=20261012-effects"></script>
 <script src="sound.js?v=20261012-always-on"></script>
-<script type="module" src="main.js?v=20261012-theme"></script>
+<script type="module" src="main.js?v=20261012-start-toggle"></script>
 </body>
 </html>

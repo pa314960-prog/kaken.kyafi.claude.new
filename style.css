@@ -792,6 +792,7 @@ body[data-screen="title"] .controls { display: none; }
 
 
 .title-cta { display: grid; justify-items: center; gap: 8px; margin-top: 4px; }
+#btn-play[hidden] { display: none; }
 
 .best-line {
   margin: 0;

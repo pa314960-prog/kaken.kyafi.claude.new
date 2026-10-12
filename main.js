@@ -86,11 +86,12 @@ const setSmoothing = $("set-smoothing");
 const setMirror = $("set-mirror");
 const setDifficulty = $("set-difficulty");
 const setTheme = $("set-theme");
+const setShowStartButton = $("set-show-start-button");
 
 /* ------------------------------------------------------------
    設定（localStorage に保存）
    ------------------------------------------------------------ */
-const defaultSettings = { sensitivity: 1.5, smoothing: 7, mirror: true, difficulty: "normal", theme: "dark" };
+const defaultSettings = { sensitivity: 1.5, smoothing: 7, mirror: true, difficulty: "normal", theme: "dark", showStartButton: true };
 let settings = Object.assign({}, defaultSettings);
 
 function loadSettings() {
@@ -563,6 +564,7 @@ setDifficulty.addEventListener("change", () => selectDifficulty(setDifficulty.va
 /* 設定 */
 function applySettingsToUI() {
   applyTheme();
+  applyStartButtonVisibility();
   setSensitivity.value = settings.sensitivity;
   setSmoothing.value = settings.smoothing;
   setMirror.checked = settings.mirror;
@@ -572,6 +574,16 @@ function applySettingsToUI() {
   overlayCanvas.classList.toggle("mirrored", settings.mirror);
   setDifficulty.value = settings.difficulty;
 }
+function applyStartButtonVisibility() {
+  settings.showStartButton = settings.showStartButton !== false;
+  setShowStartButton.checked = settings.showStartButton;
+  btnPlay.hidden = !settings.showStartButton;
+}
+setShowStartButton.addEventListener("change", () => {
+  settings.showStartButton = setShowStartButton.checked;
+  applyStartButtonVisibility();
+  saveSettings();
+});
 function applyTheme() {
   settings.theme = settings.theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = settings.theme;
