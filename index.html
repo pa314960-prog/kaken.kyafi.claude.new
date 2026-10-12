@@ -193,24 +193,6 @@
 </div>
 
 <!-- ============================================================
-     キャリブレーション画面
-     ============================================================ -->
-<div class="overlay overlay-light" id="overlay-calib" hidden>
-  <div class="overlay-inner panel">
-    <h2 class="screen-title">画面の中央に立ってください</h2>
-    <p class="screen-sub">あなたの基準位置と肩幅を計測しています</p>
-    <div class="calib-ring">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle class="calib-track" cx="60" cy="60" r="52"></circle>
-        <circle class="calib-bar" id="calib-bar" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <span class="calib-num" id="calib-num">3</span>
-    </div>
-    <button id="btn-calib-cancel" class="btn">キャンセル</button>
-  </div>
-</div>
-
-<!-- ============================================================
      カウントダウン画面
      ============================================================ -->
 <div class="overlay overlay-clear" id="overlay-countdown" hidden>
@@ -292,6 +274,6 @@
 <script src="outline-collision.js?v=20261012-marked"></script>
 <script src="game.js?v=20261012-effects"></script>
 <script src="sound.js?v=20261012-always-on"></script>
-<script type="module" src="main.js?v=20261012-title-time"></script>
+<script type="module" src="main.js?v=20261012-direct-countdown"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
    このファイルの担当:
      - カメラの起動と姿勢推定(MediaPipe PoseLandmarker)
      - 体の位置を「-1(左) 〜 +1(右)」に変換して game.js に渡す
-     - 画面遷移(タイトル → 基準合わせ → カウントダウン → プレイ → 結果)
+     - 画面遷移(タイトル → カウントダウン → プレイ → 結果)
      - ボタン・設定・記録の管理
 
    湖や障害物の描画と当たり判定は game.js の担当です。
@@ -23,7 +23,6 @@ const CONFIG = {
   MAX_POSES: 3,
 
   POSE_INTERVAL_MS: 33,        // 姿勢推定の実行間隔（描画は毎フレーム行う）
-  CALIB_SECONDS: 3,
   COUNTDOWN_SECONDS: 3,
   HANDS_HOLD_SECONDS: 0.6,     // 「両手を挙げた」と判定するまでの保持時間
   PERSON_HOLD_SECONDS: 0.4,
@@ -62,7 +61,6 @@ const hudMult = $("hud-mult");
 
 const screens = {
   title: $("overlay-title"),
-  calib: $("overlay-calib"),
   countdown: $("overlay-countdown"),
   result: $("overlay-result"),
   error: $("overlay-error"),
@@ -72,13 +70,10 @@ const btnStart = $("btn-start");
 const btnStop = $("btn-stop");
 const btnRecalib = $("btn-recalib");
 const btnPlay = $("btn-play");
-const btnCalibCancel = $("btn-calib-cancel");
 const btnRetry = $("btn-retry");
 const btnBackTitle = $("btn-back-title");
 const btnReload = $("btn-reload");
 
-const calibBar = $("calib-bar");
-const calibNum = $("calib-num");
 const countdownNum = $("countdown-num");
 
 const setSensitivity = $("set-sensitivity");
@@ -135,7 +130,7 @@ function bestFor(diff) {
 /* ------------------------------------------------------------
    状態
    ------------------------------------------------------------ */
-const S = { BOOT: "BOOT", TITLE: "TITLE", CALIB: "CALIB", COUNTDOWN: "COUNTDOWN", PLAY: "PLAY", RESULT: "RESULT", ERROR: "ERROR" };
+const S = { BOOT: "BOOT", TITLE: "TITLE", COUNTDOWN: "COUNTDOWN", PLAY: "PLAY", RESULT: "RESULT", ERROR: "ERROR" };
 let state = S.BOOT;
 let stateTimer = 0;
 let runDifficulty = "normal"; // 今回のプレイの難易度（挑戦中は settings.difficulty より1つ上）
@@ -147,8 +142,7 @@ let lastDetect = 0;
 
 let smoothedX = null;
 let calib = { centerX: 0.5, shoulderWidth: 0.2 };
-let calibSamplesX = [];
-let calibSamplesW = [];
+let standbyPoseSamples = [];
 
 let personTimer = 0;
 let handsTimer = 0;
@@ -172,7 +166,7 @@ function showScreen(name) {
 
 function updateButtons() {
   const canStart = state === S.TITLE || state === S.RESULT;
-  const canStop = state === S.CALIB || state === S.COUNTDOWN || state === S.PLAY;
+  const canStop = state === S.COUNTDOWN || state === S.PLAY;
   btnStart.disabled = !canStart;
   btnStop.disabled = !canStop;
   btnRecalib.disabled = !(landmarks && (state === S.PLAY || state === S.COUNTDOWN));
@@ -191,18 +185,11 @@ function enterState(next) {
   if (next === S.TITLE) {
     // 挑戦（1つ上の難易度）は1回きり。タイトルに戻ったら次の人は基本の難易度から
     runDifficulty = settings.difficulty;
+    standbyPoseSamples = [];
     Game.stop();
     Game.resetRun();
     refreshTitleBest();
     showScreen("title");
-  } else if (next === S.CALIB) {
-    HitHeart.clear();
-    // リトライでも、前回の被弾の粒・点滅・赤い画面効果を準備前に消す。
-    Game.resetRun();
-    calibSamplesX = [];
-    calibSamplesW = [];
-    calibBar.style.strokeDashoffset = "327";
-    showScreen("calib");
   } else if (next === S.COUNTDOWN) {
     lastCountdownShown = -1;
     showScreen("countdown");
@@ -446,7 +433,7 @@ function updateResultAuto() {
 function resultContinue() {
   if (resultMode === "done") { enterState(S.TITLE); return; }
   if (resultMode === "offer") runDifficulty = nextDifficulty(runDifficulty);
-  enterState(S.CALIB);
+  startCountdown();
 }
 
 function showResult(reason) {
@@ -499,10 +486,24 @@ function showResult(reason) {
 /* ------------------------------------------------------------
    操作（ボタン・キーボード）
    ------------------------------------------------------------ */
+function startCountdown() {
+  const current = !keyboardOnly && landmarks ? extractHorizontal(landmarks) : null;
+  const recent = current ? standbyPoseSamples.filter(sample => performance.now() - sample.time <= 500) : [];
+  const samples = recent.length ? recent : current ? [current] : [];
+  calib.centerX = samples.length ? samples.reduce((sum, sample) => sum + sample.x, 0) / samples.length : 0.5;
+  const widths = samples.filter(sample => sample.shoulderWidth > 0);
+  calib.shoulderWidth = widths.length ? widths.reduce((sum, sample) => sum + sample.shoulderWidth, 0) / widths.length : 0.2;
+  smoothedX = calib.centerX;
+  keyboardX = 0;
+  HitHeart.clear();
+  Game.resetRun();
+  Sound.ready();
+  enterState(S.COUNTDOWN);
+}
 function requestStart() {
   Sound.unlock();
   Sound.click();
-  if (state === S.TITLE) enterState(S.CALIB);
+  if (state === S.TITLE) startCountdown();
   else if (state === S.RESULT) resultContinue();
 }
 function requestStop() {
@@ -511,7 +512,7 @@ function requestStop() {
   if (state === S.PLAY) {
     Game.stop();
     showResult("manual");
-  } else if (state === S.CALIB || state === S.COUNTDOWN) {
+  } else if (state === S.COUNTDOWN) {
     enterState(S.TITLE);
   }
 }
@@ -532,7 +533,6 @@ btnStart.addEventListener("click", requestStart);
 btnPlay.addEventListener("click", requestStart);
 btnRetry.addEventListener("click", requestStart);
 btnStop.addEventListener("click", requestStop);
-btnCalibCancel.addEventListener("click", requestStop);
 btnRecalib.addEventListener("click", recalibrateNow);
 btnBackTitle.addEventListener("click", () => { Sound.unlock(); Sound.click(); enterState(S.TITLE); });
 btnReload.addEventListener("click", () => location.reload());
@@ -745,6 +745,16 @@ function loop(now) {
     else smoothedX += (h.x - smoothedX) * (1 - Math.exp(-settings.smoothing * dt));
   }
 
+  // タイトル・結果画面で直近0.5秒の立ち位置を記録。開始後の計測待ちは不要。
+  if (state === S.TITLE || state === S.RESULT) {
+    if (h && !keyboardOnly) {
+      standbyPoseSamples.push({ ...h, time: now });
+      standbyPoseSamples = standbyPoseSamples.filter(sample => now - sample.time <= 500);
+    } else {
+      standbyPoseSamples = [];
+    }
+  }
+
   // --- 両手を挙げるジェスチャー ---
   if (landmarks && areHandsRaised(landmarks)) handsTimer += dt; else handsTimer = 0;
 
@@ -771,34 +781,8 @@ function loop(now) {
   stateTimer += dt;
   switch (state) {
     case S.TITLE:
-      if (handsTimer >= CONFIG.HANDS_HOLD_SECONDS) enterState(S.CALIB);
+      if (handsTimer >= CONFIG.HANDS_HOLD_SECONDS) startCountdown();
       break;
-
-    case S.CALIB: {
-      const p = Math.min(1, stateTimer / CONFIG.CALIB_SECONDS);
-      calibBar.style.strokeDashoffset = String(327 * (1 - p));
-      const shown = Math.max(1, Math.ceil(CONFIG.CALIB_SECONDS - stateTimer));
-      if (calibNum.textContent !== String(shown)) {
-        calibNum.textContent = String(shown);
-        Sound.beep();
-      }
-      if (h) {
-        calibSamplesX.push(h.x);
-        if (h.shoulderWidth) calibSamplesW.push(h.shoulderWidth);
-      }
-      if (stateTimer >= CONFIG.CALIB_SECONDS) {
-        calib.centerX = calibSamplesX.length
-          ? calibSamplesX.reduce((a, b) => a + b, 0) / calibSamplesX.length
-          : 0.5;
-        calib.shoulderWidth = calibSamplesW.length
-          ? calibSamplesW.reduce((a, b) => a + b, 0) / calibSamplesW.length
-          : 0.2;
-        smoothedX = calib.centerX;
-        Sound.ready();
-        enterState(S.COUNTDOWN);
-      }
-      break;
-    }
 
     case S.COUNTDOWN: {
       const remain = CONFIG.COUNTDOWN_SECONDS - stateTimer;
@@ -844,7 +828,6 @@ function loop(now) {
     if (state !== S.ERROR) {
       if (keyboardOnly) setStatus("キーボード（← →）で操作します");
       else if (!tracked) setStatus("カメラの前に立ってください");
-      else if (state === S.CALIB) setStatus("中央でじっとしていてください");
       else if (state === S.PLAY) setStatus("体を左右に動かしてよけよう");
       else setStatus("追跡できています");
     }
