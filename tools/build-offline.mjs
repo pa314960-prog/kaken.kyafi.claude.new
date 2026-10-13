@@ -20,7 +20,7 @@
    MediaPipe の部品は初回だけネットから取ってきて .offline-cache/ に残す。
    ============================================================ */
 
-import { readFile, writeFile, mkdir, rm, cp, access } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm, cp, access, readdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -80,17 +80,41 @@ for (const [name, url] of Object.entries(PARTS)) parts[name] = await getPart(nam
 await rm(OUT_BASE, { recursive: true, force: true });
 await mkdir(path.join(OUT, "lib"), { recursive: true });
 
-/* ゲーム本体（そのままコピー） */
-for (const f of ["game.js", "character-hit-region.js", "outline-collision.js", "hit-heart.js", "sound.js", "style.css", "README.md"]) {
+let html = await readFile(path.join(ROOT, "index.html"), "utf8");
+
+/* ゲーム本体（そのままコピー）。普通の <script> は index.html から拾うので、
+   ファイルが増えてもこのスクリプトを直さなくてよい */
+const classicScripts = [...html.matchAll(/<script src="([^"?]+)(?:\?[^"]*)?"><\/script>/g)].map((m) => m[1]);
+if (!classicScripts.includes("game.js")) throw new Error("index.html に game.js の読み込みが見つかりません");
+for (const f of [...classicScripts, "style.css", "README.md"]) {
   await cp(path.join(ROOT, f), path.join(OUT, f));
 }
 await cp(path.join(ROOT, "assets"), path.join(OUT, "assets"), { recursive: true });
+
+/* 当たり判定で画素を読む画像（障害物・アイテム）は data: URL にして同梱する。
+   file:// の画像を Canvas に描くと「汚染」され getImageData が使えないため。
+   game.js の assetUrl() が window.OFFLINE_ASSETS を見て差し替える */
+const MIME = { ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".jpg": "image/jpeg", ".jpeg": "image/jpeg" };
+const bundled = {};
+for (const dir of ["assets/obstacles", "assets/items"]) {
+  for (const name of await readdir(path.join(ROOT, dir))) {
+    const type = MIME[path.extname(name).toLowerCase()];
+    if (!type) continue;
+    const data = await readFile(path.join(ROOT, dir, name));
+    bundled[`${dir}/${name}`] = `data:${type};base64,${data.toString("base64")}`;
+  }
+}
 
 /* main.js: type="module" をやめて普通の <script> で読むので、変数が外に漏れないよう包む */
 await writeFile(path.join(OUT, "main.js"), `(() => {\n"use strict";\n${mainSrc}\n})();\n`);
 
 /* index.html */
-let html = await readFile(path.join(ROOT, "index.html"), "utf8");
+html = replaceOnce(
+  html,
+  /(<script src="[^"]+"><\/script>)/,
+  '<script src="lib/assets-data.js"></script>\n$1',
+  "最初の <script> の読み込み"
+);
 // Google Fonts はネットがないと読めないので外す（端末のフォントで表示される）
 html = replaceOnce(html, /[ \t]*<link[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>\r?\n/g, "", "Google Fonts の読み込み");
 html = replaceOnce(
@@ -110,6 +134,7 @@ await writeFile(path.join(OUT, "index.html"), html);
 
 /* lib/ */
 const lib = (f) => path.join(OUT, "lib", f);
+await writeFile(lib("assets-data.js"), `window.OFFLINE_ASSETS = ${JSON.stringify(bundled)};\n`);
 await writeFile(
   lib("vision_bundle.js"),
   "(function () {\nvar module = { exports: {} }; var exports = module.exports;\n" +

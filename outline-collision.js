@@ -6,6 +6,9 @@ window.OutlineCollision = (function () {
   var ac = a.getContext('2d', { willReadFrequently: true });
   var bc = b.getContext('2d', { willReadFrequently: true });
   var characterMasks = new WeakMap();
+  // 画素が読めない環境（file:// で同梱されていない画像など）では、以後は null を返して
+  // game.js の従来の判定に任せる。例外を投げるとゲームのループが止まってしまうため。
+  var pixelsUnavailable = false;
 
   // 画像の色に関係なく、指定された赤線の内側全体を判定にする。
   function markedRegion(img) {
@@ -27,7 +30,17 @@ window.OutlineCollision = (function () {
   }
 
   function overlaps(first, second, scale) {
-    if (!first || !second) return null;
+    if (!first || !second || pixelsUnavailable) return null;
+    try {
+      return overlapsByPixels(first, second, scale);
+    } catch (e) {
+      pixelsUnavailable = true;
+      if (window.console) console.warn('画素での当たり判定が使えないため、従来の判定に切り替えます', e);
+      return null;
+    }
+  }
+
+  function overlapsByPixels(first, second, scale) {
     scale = scale || 1;
     var left = Math.floor(Math.max(first.x, second.x) * scale);
     var top = Math.floor(Math.max(first.y, second.y) * scale);
