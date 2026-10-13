@@ -104,6 +104,13 @@ window.Game = (function () {
        width  : 表示する幅（ワールド単位。高さは画像の縦横比から決まる）
        bottom : 画像の下端の高さ（ワールド単位。0 が水面、マイナスは水に沈む）
      画像が読み込めないときは、Canvas で描いた図形で代用する。 */
+  /* オフライン版（file:// で開く）では、当たり判定で画素を読む画像を data: URL で同梱している。
+     file:// の画像をそのまま使うと Canvas が汚染され、getImageData が使えないため。 */
+  function assetUrl(path) {
+    var bundled = window.OFFLINE_ASSETS;
+    return (bundled && bundled[path]) || path;
+  }
+
   var OBSTACLE_IMAGES = {
     net:    { src: 'assets/obstacles/net.webp',    width: 2.5,  bottom: -0.15 },
     hook:   { src: 'assets/obstacles/hook.webp',   width: 1.05, bottom: 0.30 },
@@ -114,7 +121,7 @@ window.Game = (function () {
     o.img = new Image();
     o.ready = false;
     o.img.onload = function () { o.ready = true; };
-    o.img.src = o.src;
+    o.img.src = assetUrl(o.src);
   });
 
   /* ----------------------------------------------------------
@@ -175,12 +182,12 @@ window.Game = (function () {
   /* 得点アイテム（エビ）の画像 */
   var shrimpImg = { img: new Image(), ready: false };
   shrimpImg.img.onload = function () { shrimpImg.ready = true; };
-  shrimpImg.img.src = CONFIG.shrimpImage;
+  shrimpImg.img.src = assetUrl(CONFIG.shrimpImage);
 
   /* ライフ回復アイテム（ハート）の画像 */
   var heartImg = { img: new Image(), ready: false };
   heartImg.img.onload = function () { heartImg.ready = true; };
-  heartImg.img.src = CONFIG.heartImage;
+  heartImg.img.src = assetUrl(CONFIG.heartImage);
 
   /* 背景写真（1枚ずつ読み込み、読めたものだけ使う） */
   var bgImages = CONFIG.backgrounds.map(function (b) {
