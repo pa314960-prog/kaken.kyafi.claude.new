@@ -90,6 +90,9 @@ for (const f of [...classicScripts, "style.css", "README.md"]) {
   await cp(path.join(ROOT, f), path.join(OUT, f));
 }
 await cp(path.join(ROOT, "assets"), path.join(OUT, "assets"), { recursive: true });
+// file:// でも環境音を読み込めるように同梱する。
+const calmLake = await readFile(path.join(ROOT, "assets", "audio", "calm-lake.wav"));
+await writeFile(path.join(OUT, "lib", "calm-lake-data.js"), `window.OFFLINE_CALM_LAKE = "${calmLake.toString("base64")}";\n`);
 
 /* 当たり判定で画素を読む画像（障害物・アイテム）は data: URL にして同梱する。
    file:// の画像を Canvas に描くと「汚染」され getImageData が使えないため。
@@ -115,6 +118,8 @@ html = replaceOnce(
   '<script src="lib/assets-data.js"></script>\n$1',
   "最初の <script> の読み込み"
 );
+html = replaceOnce(html, /<script src="sound\.js(?:\?[^"]*)?"><\/script>/,
+  '<script src="lib/calm-lake-data.js"></script>\n<script src="sound.js"></script>', "環境音の読み込み");
 // Google Fonts はネットがないと読めないので外す（端末のフォントで表示される）
 html = replaceOnce(html, /[ \t]*<link[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>\r?\n/g, "", "Google Fonts の読み込み");
 html = replaceOnce(

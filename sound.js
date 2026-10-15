@@ -1,8 +1,7 @@
 /* ============================================================
    キャッフィーの琵琶湖サバイバル ― 効果音
    ------------------------------------------------------------
-   音声ファイルは使わず、Web Audio API でその場で音を合成します。
-   （ダウンロードが不要なので、どの環境でもすぐ鳴ります）
+   環境音は穏やかな湖のWAVを繰り返し再生し、効果音はWeb Audio APIで合成します。
 
    ブラウザの制限で、AudioContext は「ユーザーが何かを操作した後」
    でないと音を出せません。そのため unlock() を最初のクリックや
@@ -42,45 +41,51 @@ window.Sound = (function () {
 
   /* ----------------------------------------------------------
      環境音（湖のさざ波）
-       ホワイトノイズをローパスに通して水の音に近づけ、
-       ゆっくり揺らして単調にならないようにしています。
+       試聴音①を使用。つなぎ目をクロスフェードして連続再生します。
      ---------------------------------------------------------- */
   function buildAmbient() {
-    var len = Math.floor(ctx.sampleRate * 2);
-    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    var data = buf.getChannelData(0);
-    for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-
-    ambientSource = ctx.createBufferSource();
-    ambientSource.buffer = buf;
-    ambientSource.loop = true;
-
-    var lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 620;
-    lp.Q.value = 0.6;
-
-    var hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 180;
-
     ambientGain = ctx.createGain();
     ambientGain.gain.value = 0;
-
-    // ゆっくりした揺らぎ（波が寄せては返す感じ）
-    var lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.09;
-    var lfoGain = ctx.createGain();
-    lfoGain.gain.value = 180;
-    lfo.connect(lfoGain);
-    lfoGain.connect(lp.frequency);
-    lfo.start();
-
-    ambientSource.connect(hp);
-    hp.connect(lp);
-    lp.connect(ambientGain);
     ambientGain.connect(master);
-    ambientSource.start();
+    var audioBytes = window.OFFLINE_CALM_LAKE
+      ? Promise.resolve(Uint8Array.from(atob(window.OFFLINE_CALM_LAKE), function (c) { return c.charCodeAt(0); }).buffer)
+      : fetch('assets/audio/calm-lake.wav').then(function (response) {
+          if (!response.ok) throw new Error('Wave audio: ' + response.status);
+          return response.arrayBuffer();
+        });
+    audioBytes
+      .then(function (bytes) { return ctx.decodeAudioData(bytes); })
+      .then(function (decoded) {
+        // Remove the audition fade and crossfade the seam for a continuous loop.
+        var trim = Math.round(decoded.sampleRate * 0.75);
+        var overlap = Math.round(decoded.sampleRate * 0.5);
+        var size = decoded.length - trim * 2;
+        var length = size - overlap;
+        var buffer = ctx.createBuffer(decoded.numberOfChannels, length, decoded.sampleRate);
+        for (var channel = 0; channel < decoded.numberOfChannels; channel++) {
+          var source = decoded.getChannelData(channel).subarray(trim, decoded.length - trim);
+          var target = buffer.getChannelData(channel);
+          target.set(source.subarray(overlap, size - overlap));
+          for (var i = 0; i < overlap; i++) {
+            var mix = i / (overlap - 1);
+            target[length - overlap + i] = source[size - overlap + i] * (1 - mix) + source[i] * mix;
+          }
+        }
+        ambientSource = ctx.createBufferSource();
+        ambientSource.buffer = buffer;
+        ambientSource.loop = true;
+        // Match the audition's loudness while preserving game/result volume changes.
+        var waveLevel = ctx.createGain();
+        waveLevel.gain.value = 4;
+        ambientSource.connect(waveLevel);
+        waveLevel.connect(ambientGain);
+        ambientSource.start();
+        document.body.dataset.waveAudio = 'ready';
+      })
+      .catch(function (error) {
+        document.body.dataset.waveAudio = 'error';
+        console.error(error);
+      });
   }
 
   function setAmbient(level, seconds) {

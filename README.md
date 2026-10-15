@@ -129,7 +129,7 @@ node tools/build-offline.mjs
 index.html             マークアップ
 style.css              見た目（色は :root 変数で一元管理）
 game.js                湖・障害物・キャラクターの描画、当たり判定、スコア
-sound.js               効果音（Web Audio で合成。音声ファイル不要）
+sound.js               湖の環境音（WAVの連続再生）と効果音（Web Audioで合成）
 main.js                カメラ・姿勢推定・画面遷移・UI・設定・記録
 assets/character.gif   キャラクター画像（400×228・背景透過）
 assets/bg/             背景写真（morning / day / sunset / night の4枚・WebP）
@@ -251,3 +251,5 @@ function project(x, z) {
 - 書体: Google Fonts（Zen Maru Gothic / Outfit）
 - フレームワーク不使用、素のJavaScript
 - 記録・設定の保存: `localStorage`
+
+- 湖の環境音: `assets/audio/calm-lake.wav`（試聴音①「穏やかな湖」）。つなぎ目をクロスフェードして繰り返し再生します。効果音とゲーム終了時の音量調整は維持しています。
