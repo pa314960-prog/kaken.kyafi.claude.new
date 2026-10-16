@@ -177,6 +177,19 @@ window.Sound = (function () {
       setAmbient(0.16, 1.2);
     },
 
+    /* 残り10秒から秒ごとに通知。最後の3秒は高い二連音にする。 */
+    timeWarning: function (seconds) {
+      if (seconds === 10) {
+        tone({ type: 'triangle', freq: 660, dur: 0.12, gain: 0.15 });
+        tone({ type: 'triangle', freq: 880, dur: 0.16, gain: 0.15, delay: 0.14 });
+      } else if (seconds <= 3) {
+        tone({ type: 'triangle', freq: 990, dur: 0.09, gain: 0.16 });
+        tone({ type: 'triangle', freq: 990, dur: 0.09, gain: 0.16, delay: 0.13 });
+      } else {
+        tone({ type: 'triangle', freq: 660, dur: 0.10, gain: 0.13 });
+      }
+    },
+
     /* アイテム（エビ）を取った */
     pickup: function () {
       tone({ type: 'triangle', freq: 880, dur: 0.08, gain: 0.13 });

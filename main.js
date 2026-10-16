@@ -153,6 +153,7 @@ let keyboardOnly = false; // カメラなしでキーボードだけで遊んで
 
 let lastHudUpdate = 0;
 let lastCountdownShown = -1;
+let lastTimeWarning = 11;
 
 /* ------------------------------------------------------------
    画面切り替え
@@ -194,6 +195,7 @@ function enterState(next) {
     lastCountdownShown = -1;
     showScreen("countdown");
   } else if (next === S.PLAY) {
+    lastTimeWarning = 11;
     Game.setDifficulty(runDifficulty);
     Game.start();
     buildLifePips();
@@ -331,6 +333,10 @@ function buildLifePips() {
 }
 function updateHud() {
   const st = Game.getStats();
+  if (st.remain > 0 && st.remain <= 10 && st.remain < lastTimeWarning) {
+    lastTimeWarning = st.remain;
+    Sound.timeWarning(st.remain);
+  }
   hudScore.textContent = st.score;
   hudTime.textContent = st.remain;
   hudDodged.textContent = st.dodged;
