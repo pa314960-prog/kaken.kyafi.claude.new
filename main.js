@@ -86,7 +86,7 @@ const setShowStartButton = $("set-show-start-button");
 /* ------------------------------------------------------------
    設定（localStorage に保存）
    ------------------------------------------------------------ */
-const defaultSettings = { sensitivity: 1.5, smoothing: 7, mirror: true, difficulty: "normal", theme: "dark", showStartButton: true };
+const defaultSettings = { sensitivity: 1.5, smoothing: 14, mirror: true, difficulty: "normal", theme: "light", showStartButton: false };
 let settings = Object.assign({}, defaultSettings);
 
 function loadSettings() {

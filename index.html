@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -93,14 +93,14 @@
   <summary>設定</summary>
   <div class="settings">
     <label class="check">
-      <input type="checkbox" id="set-show-start-button" checked>
+      <input type="checkbox" id="set-show-start-button">
       <span>ゲーム開始ボタンを表示（展示時はオフ）</span>
     </label>
     <label>
       <span>画面の明るさ</span>
       <select id="set-theme">
         <option value="dark">暗い</option>
-        <option value="light">明るい</option>
+        <option value="light" selected>明るい</option>
       </select>
     </label>
     <label>
@@ -110,8 +110,8 @@
     </label>
     <label>
       <span>滑らかさ(大きいほどキビキビ動く)</span>
-      <input type="range" id="set-smoothing" min="2" max="14" step="0.5" value="7">
-      <output id="set-smoothing-value">7.0</output>
+      <input type="range" id="set-smoothing" min="2" max="14" step="0.5" value="14">
+      <output id="set-smoothing-value">14.0</output>
     </label>
     <label class="check">
       <input type="checkbox" id="set-mirror" checked>
@@ -157,7 +157,7 @@
     </div>
 
     <div class="title-cta">
-      <button id="btn-play" class="btn btn-primary btn-large">ゲーム開始</button>
+      <button id="btn-play" class="btn btn-primary btn-large" hidden>ゲーム開始</button>
       <p class="title-time-limit">制限時間は<strong>60秒</strong></p>
       <p class="title-life-rule">ライフがなくなるとゲーム終了</p>
     </div>
@@ -273,6 +273,6 @@
 <script src="outline-collision.js?v=20261012-marked"></script>
 <script src="game.js?v=20261012-effects"></script>
 <script src="sound.js?v=20261016-time-warning"></script>
-<script type="module" src="main.js?v=20261016-time-warning"></script>
+<script type="module" src="main.js?v=20261017-default-settings"></script>
 </body>
 </html>
